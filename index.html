@@ -22,7 +22,7 @@
       font-size: 18px;
     }
     .message { margin-top: 10px; color: #777; font-size: 14px; }
-    .card { margin-top: 20px; border-radius: 16px; }
+    .phone-card img { max-width: 100%; border-radius: 12px; }
   </style>
 </head>
 <body>
@@ -34,15 +34,14 @@
     </form>
   </div>
 
-  <div class="container">
-    <div id="result"></div>
-  </div>
+  <div class="container" id="result"></div>
 
   <script>
     const form = document.getElementById("searchForm");
     const input = document.getElementById("phoneInput");
     const resultDiv = document.getElementById("result");
 
+    // 🟢 البحث عن الهواتف
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const phone = input.value.trim();
@@ -59,24 +58,56 @@
           return;
         }
 
-        let specsHtml = "";
-        for (const [key, val] of Object.entries(data.specs)) {
-          specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
+        // إذا كانت نتائج متعددة
+        if (data.mode === "list") {
+          let cards = "<div class='row'>";
+          for (const item of data.results) {
+            cards += `
+              <div class="col-md-4 mb-4">
+                <div class="card phone-card shadow h-100">
+                  ${item.img ? `<img src="${item.img}" class="card-img-top">` : ""}
+                  <div class="card-body d-flex flex-column">
+                    <h6 class="card-title">${item.title}</h6>
+                    <button class="btn btn-primary mt-auto" onclick="getDetails('${item.link}')">عرض المواصفات</button>
+                  </div>
+                </div>
+              </div>`;
+          }
+          cards += "</div>";
+          resultDiv.innerHTML = cards;
         }
-
-        resultDiv.innerHTML = `
-          <div class="card shadow">
-            <div class="card-body">
-              <h4>${data.title}</h4>
-              <ul>${specsHtml}</ul>
-              <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع تلفونك</a>
-            </div>
-          </div>
-        `;
       } catch (err) {
-        resultDiv.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+        resultDiv.innerHTML = `<div class='alert alert-danger'>⚠️ خطأ في الاتصال.</div>`;
       }
     });
+
+    // 🟢 عند اختيار هاتف لعرض التفاصيل
+    async function getDetails(url) {
+      resultDiv.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
+      const res = await fetch(`/api/${encodeURIComponent("details")}?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+
+      if (data.error) {
+        resultDiv.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
+        return;
+      }
+
+      let specsHtml = "";
+      for (const [key, val] of Object.entries(data.specs)) {
+        specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
+      }
+
+      resultDiv.innerHTML = `
+        <div class="card shadow mt-4">
+          <div class="card-body">
+            <h4>${data.title}</h4>
+            <ul>${specsHtml}</ul>
+            <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع تلفونك</a>
+          </div>
+        </div>
+      `;
+    }
   </script>
+
 </body>
 </html>
