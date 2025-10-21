@@ -11,18 +11,15 @@ export default async function handler(req, res) {
     const html = await response.text();
 
     const $ = cheerio.load(html);
-
     const title = $("h1").first().text().trim();
-    const specs = {};
 
-    // استخراج المواصفات من عناصر الصفحة
+    const specs = {};
     $(".specs-table tr").each((_, el) => {
       const key = $(el).find("th").text().trim();
       const value = $(el).find("td").text().trim();
       if (key && value) specs[key] = value;
     });
 
-    // fallback في حال لم توجد .specs-table
     if (Object.keys(specs).length === 0) {
       $("li").each((_, el) => {
         const text = $(el).text().trim();
@@ -33,13 +30,13 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       source: url,
       title,
       specs
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
