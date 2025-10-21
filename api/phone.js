@@ -6,7 +6,12 @@ export default async function handler(req, res) {
     const phone = req.query.phone || req.url.split("?phone=")[1];
     if (!phone) return res.status(400).json({ error: "Missing phone parameter" });
 
-    const slug = decodeURIComponent(phone.trim()).replace(/\s+/g, "-").toLowerCase();
+    // تحويل الاسم إلى شكل رابط الموقع (slug)
+    const slug = decodeURIComponent(phone)
+      .trim()
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
     const url = `https://telfonak.com/${slug}/`;
 
     const response = await fetch(url);
@@ -34,6 +39,8 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!title) throw new Error("لم يتم العثور على الهاتف المطلوب.");
+
     res.status(200).json({
       success: true,
       source: url,
@@ -41,6 +48,6 @@ export default async function handler(req, res) {
       specs
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(404).json({ error: err.message });
   }
 }
