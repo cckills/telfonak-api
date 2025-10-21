@@ -3,24 +3,47 @@ import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
   try {
-    const query = req.query.phone || req.url.split("?phone=")[1];
-    if (!query) return res.status(400).json({ error: "Missing phone name" });
+    const phoneQuery = req.query.phone || req.url.split("?phone=")[1];
+    if (!phoneQuery) return res.status(400).json({ error: "Missing phone name" });
 
-    const phoneName = decodeURIComponent(query).trim();
-    const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(phoneName)}`;
+    const searchWords = phoneQuery.trim().split(" ");
+    const baseName = searchWords.join(" ");
+    const attempts = [
+      baseName,
+      `Huawei ${baseName}`,
+      `${baseName} Huawei`,
+      `${baseName} Prime`,
+      `${baseName} 2019`,
+      `${baseName} 2020`,
+      `${baseName} 2021`,
+      `${baseName} 2022`,
+      `${baseName} 2023`,
+      `${baseName} Pro`,
+      `${baseName} Plus`,
+      `${baseName} Note`,
+      `${baseName} A15`,
+    ];
 
-    // الخطوة 1: البحث في الموقع
-    const searchResponse = await fetch(searchUrl);
-    const searchHtml = await searchResponse.text();
-    const $search = cheerio.load(searchHtml);
+    let firstLink = null;
 
-    // جلب أول نتيجة بحث
-    const firstLink = $search(".td-module-thumb a").attr("href");
+    // 🧭 الخطوة 1: جرّب البحث بعدة أشكال حتى تجد نتيجة
+    for (const attempt of attempts) {
+      const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(attempt)}`;
+      const searchResponse = await fetch(searchUrl);
+      const searchHtml = await searchResponse.text();
+      const $search = cheerio.load(searchHtml);
 
-    if (!firstLink)
-      throw new Error("لم يتم العثور على أي نتائج لهذا الاسم في الموقع.");
+      const link = $search(".td-module-thumb a").attr("href");
+      if (link) {
+        firstLink = link;
+        console.log("✅ Found match:", attempt);
+        break;
+      }
+    }
 
-    // الخطوة 2: الدخول إلى صفحة الهاتف الفعلية
+    if (!firstLink) throw new Error("لم يتم العثور على أي نتائج لهذا الاسم في الموقع.");
+
+    // 🧭 الخطوة 2: جلب صفحة الهاتف الحقيقي
     const response = await fetch(firstLink);
     const html = await response.text();
     const $ = cheerio.load(html);
@@ -34,6 +57,7 @@ export default async function handler(req, res) {
       if (key && value) specs[key] = value;
     });
 
+    // fallback
     if (Object.keys(specs).length === 0) {
       $("li").each((_, el) => {
         const text = $(el).text().trim();
@@ -46,7 +70,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({
       success: true,
-      searchQuery: phoneName,
+      searchQuery: phoneQuery,
       source: firstLink,
       title,
       specs
