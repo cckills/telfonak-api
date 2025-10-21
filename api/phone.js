@@ -37,16 +37,28 @@ export default async function handler(req, res) {
         const img =
           $(el).find("span.img").attr("data-bgsrc") ||
           $(el).find("img").attr("src");
+if (link && title) {
+  let chipset = "";
+  try {
+    // 🧠 جلب صفحة الهاتف لمعرفة المعالج
+    const phonePage = await fetch(link);
+    if (phonePage.ok) {
+      const phoneHtml = await phonePage.text();
+      const $$ = cheerio.load(phoneHtml);
+      chipset =
+        $$("tr:contains('المعالج') td.aps-attr-value").text().trim() ||
+        $$("tr:contains('المعالج') span.aps-1co").text().trim();
+    }
+  } catch {}
 
-        if (link && title) {
-          results.push({
-            title,
-            link,
-            img,
-            source: "telfonak.com",
-          });
-        }
-      });
+  results.push({
+    title,
+    link,
+    img,
+    chipset: chipset || "غير محدد",
+  });
+}
+
 
       // 🟢 تحقق من وجود رابط صفحة تالية
       hasNext = $(".pagination .next, .nav-links .next").length > 0;
@@ -97,3 +109,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "حدث خطأ أثناء جلب البيانات." });
   }
 }
+
