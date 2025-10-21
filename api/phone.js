@@ -3,17 +3,21 @@ import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
   try {
-    const { phone } = req.query;
-    if (!phone) return res.status(400).json({ error: "Missing phone name" });
+    const phone = req.query.phone || req.url.split("?phone=")[1];
+    if (!phone) return res.status(400).json({ error: "Missing phone parameter" });
 
-    const url = `https://telfonak.com/${phone}/`;
+    const slug = decodeURIComponent(phone.trim()).replace(/\s+/g, "-").toLowerCase();
+    const url = `https://telfonak.com/${slug}/`;
+
     const response = await fetch(url);
+    if (!response.ok) throw new Error(`فشل في جلب الصفحة (${response.status})`);
+
     const html = await response.text();
-
     const $ = cheerio.load(html);
-    const title = $("h1").first().text().trim();
 
+    const title = $("h1").first().text().trim();
     const specs = {};
+
     $(".specs-table tr").each((_, el) => {
       const key = $(el).find("th").text().trim();
       const value = $(el).find("td").text().trim();
