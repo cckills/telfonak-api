@@ -3,20 +3,25 @@ import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
   try {
-    const phone = req.query.phone || req.url.split("?phone=")[1];
-    if (!phone) return res.status(400).json({ error: "Missing phone parameter" });
+    const query = req.query.phone || req.url.split("?phone=")[1];
+    if (!query) return res.status(400).json({ error: "Missing phone name" });
 
-    // تحويل الاسم إلى شكل رابط الموقع (slug)
-    const slug = decodeURIComponent(phone)
-      .trim()
-      .replace(/\s+/g, "-")
-      .toLowerCase();
+    const phoneName = decodeURIComponent(query).trim();
+    const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(phoneName)}`;
 
-    const url = `https://telfonak.com/${slug}/`;
+    // الخطوة 1: البحث في الموقع
+    const searchResponse = await fetch(searchUrl);
+    const searchHtml = await searchResponse.text();
+    const $search = cheerio.load(searchHtml);
 
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`فشل في جلب الصفحة (${response.status})`);
+    // جلب أول نتيجة بحث
+    const firstLink = $search(".td-module-thumb a").attr("href");
 
+    if (!firstLink)
+      throw new Error("لم يتم العثور على أي نتائج لهذا الاسم في الموقع.");
+
+    // الخطوة 2: الدخول إلى صفحة الهاتف الفعلية
+    const response = await fetch(firstLink);
     const html = await response.text();
     const $ = cheerio.load(html);
 
@@ -39,11 +44,10 @@ export default async function handler(req, res) {
       });
     }
 
-    if (!title) throw new Error("لم يتم العثور على الهاتف المطلوب.");
-
     res.status(200).json({
       success: true,
-      source: url,
+      searchQuery: phoneName,
+      source: firstLink,
       title,
       specs
     });
