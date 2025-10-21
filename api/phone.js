@@ -5,45 +5,61 @@ export default async function handler(req, res) {
   if (!phone) return res.status(400).json({ error: "يرجى إدخال اسم الهاتف." });
 
   try {
-    // 🟢 رابط البحث في موقع telfonak
-    const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(phone)}`;
-
-    const response = await fetch(searchUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-      },
-    });
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
     const results = [];
+    let page = 1;
+    let hasNext = true;
 
-    // 🔍 استخراج الهواتف من نتائج البحث
-    $(".media").each((_, el) => {
-      const link = $(el).find("a.image-link").attr("href");
-      const title = $(el).find("a.image-link").attr("title");
-      const img = $(el)
-        .find("span.img")
-        .attr("data-bgsrc") || $(el).find("img").attr("src");
+    // 🔁 تكرار حتى لا توجد صفحات أخرى
+    while (hasNext && page <= 5) {
+      const searchUrl = `https://telfonak.com/page/${page}/?s=${encodeURIComponent(phone)}`;
+      console.log("⏳ Fetching:", searchUrl);
 
-      if (link && title) {
-        results.push({
-          title,
-          link,
-          img,
-          source: "telfonak.com",
-        });
+      const response = await fetch(searchUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        },
+      });
+
+      if (!response.ok) break;
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      const items = $(".media");
+      if (items.length === 0) {
+        hasNext = false;
+        break;
       }
-    });
 
-    // ✅ إذا وجد نتائج (قائمة)
+      items.each((_, el) => {
+        const link = $(el).find("a.image-link").attr("href");
+        const title = $(el).find("a.image-link").attr("title");
+        const img =
+          $(el).find("span.img").attr("data-bgsrc") ||
+          $(el).find("img").attr("src");
+
+        if (link && title) {
+          results.push({
+            title,
+            link,
+            img,
+            source: "telfonak.com",
+          });
+        }
+      });
+
+      // 🟢 تحقق من وجود رابط صفحة تالية
+      hasNext = $(".pagination .next, .nav-links .next").length > 0;
+      page++;
+    }
+
+    // ✅ إذا وجد نتائج
     if (results.length > 0) {
       res.status(200).json({ mode: "list", results });
       return;
     }
 
-    // 🟡 إذا لم توجد نتائج — نحاول جلب صفحة هاتف مفصلة
+    // 🟡 إذا لم توجد نتائج نحاول صفحة الهاتف مباشرة
     const phoneUrl = `https://telfonak.com/${encodeURIComponent(phone)}/`;
     const pageRes = await fetch(phoneUrl);
 
@@ -73,9 +89,11 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.status(404).json({ error: "❌ لم يتم العثور على أي نتائج لهذا الاسم في الموقع." });
+    res.status(404).json({
+      error: "❌ لم يتم العثور على أي نتائج لهذا الاسم في الموقع.",
+    });
   } catch (err) {
-    console.error("خطأ أثناء الجلب:", err);
-    res.status(500).json({ error: "⚠️ حدث خطأ أثناء جلب البيانات." });
+    console.error("⚠️ خطأ أثناء الجلب:", err);
+    res.status(500).json({ error: "حدث خطأ أثناء جلب البيانات." });
   }
 }
