@@ -3,78 +3,60 @@ import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
   try {
-    const phoneQuery = req.query.phone || req.url.split("?phone=")[1];
-    if (!phoneQuery) return res.status(400).json({ error: "Missing phone name" });
+    const phoneName = decodeURIComponent(req.query.phone || "").trim();
+    const detailsUrl = req.query.url;
 
-    const searchWords = phoneQuery.trim().split(" ");
-    const baseName = searchWords.join(" ");
-    const attempts = [
-      baseName,
-      `Huawei ${baseName}`,
-      `${baseName} Huawei`,
-      `${baseName} Prime`,
-      `${baseName} 2019`,
-      `${baseName} 2020`,
-      `${baseName} 2021`,
-      `${baseName} 2022`,
-      `${baseName} 2023`,
-      `${baseName} Pro`,
-      `${baseName} Plus`,
-      `${baseName} Note`,
-      `${baseName} A15`,
-    ];
+    // 🟢 المرحلة 2: إذا تم تمرير رابط مباشر -> اجلب المواصفات فقط
+    if (detailsUrl) {
+      const response = await fetch(detailsUrl);
+      const html = await response.text();
+      const $ = cheerio.load(html);
 
-    let firstLink = null;
+      const title = $("h1").first().text().trim();
+      const specs = {};
 
-    // 🧭 الخطوة 1: جرّب البحث بعدة أشكال حتى تجد نتيجة
-    for (const attempt of attempts) {
-      const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(attempt)}`;
-      const searchResponse = await fetch(searchUrl);
-      const searchHtml = await searchResponse.text();
-      const $search = cheerio.load(searchHtml);
+      $(".specs-table tr").each((_, el) => {
+        const key = $(el).find("th").text().trim();
+        const value = $(el).find("td").text().trim();
+        if (key && value) specs[key] = value;
+      });
 
-      const link = $search(".td-module-thumb a").attr("href");
-      if (link) {
-        firstLink = link;
-        console.log("✅ Found match:", attempt);
-        break;
+      if (Object.keys(specs).length === 0) {
+        $("li").each((_, el) => {
+          const text = $(el).text().trim();
+          if (text.includes(":")) {
+            const [k, v] = text.split(":");
+            specs[k.trim()] = v.trim();
+          }
+        });
       }
-    }
 
-    if (!firstLink) throw new Error("لم يتم العثور على أي نتائج لهذا الاسم في الموقع.");
-
-    // 🧭 الخطوة 2: جلب صفحة الهاتف الحقيقي
-    const response = await fetch(firstLink);
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    const title = $("h1").first().text().trim();
-    const specs = {};
-
-    $(".specs-table tr").each((_, el) => {
-      const key = $(el).find("th").text().trim();
-      const value = $(el).find("td").text().trim();
-      if (key && value) specs[key] = value;
-    });
-
-    // fallback
-    if (Object.keys(specs).length === 0) {
-      $("li").each((_, el) => {
-        const text = $(el).text().trim();
-        if (text.includes(":")) {
-          const [k, v] = text.split(":");
-          specs[k.trim()] = v.trim();
-        }
+      return res.status(200).json({
+        mode: "details",
+        title,
+        specs,
+        source: detailsUrl,
       });
     }
 
-    res.status(200).json({
-      success: true,
-      searchQuery: phoneQuery,
-      source: firstLink,
-      title,
-      specs
+    // 🟢 المرحلة 1: البحث عن الأجهزة
+    if (!phoneName) return res.status(400).json({ error: "Missing phone name" });
+    const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(phoneName)}`;
+    const searchResponse = await fetch(searchUrl);
+    const searchHtml = await searchResponse.text();
+    const $ = cheerio.load(searchHtml);
+
+    const results = [];
+    $(".td_module_10, .td_module_11, .td_module_1, .td_module_3").each((_, el) => {
+      const link = $(el).find("a").attr("href");
+      const title = $(el).find(".entry-title, .td-module-title").text().trim();
+      const img = $(el).find("img").attr("src");
+      if (link && title) results.push({ title, link, img });
     });
+
+    if (results.length === 0) throw new Error("لم يتم العثور على نتائج لهذا الاسم.");
+
+    res.status(200).json({ mode: "list", results });
   } catch (err) {
     res.status(404).json({ error: err.message });
   }
