@@ -6,23 +6,20 @@ export default async function handler(req, res) {
     const phoneName = decodeURIComponent(req.query.phone || "").trim();
     const detailsUrl = req.query.url;
 
-    // 📱 إذا تم تمرير رابط مباشر، اجلب تفاصيل الهاتف
+    // 📄 إذا تم تمرير رابط مباشر، اجلب تفاصيل الهاتف من أي موقع
     if (detailsUrl) {
-      const response = await fetch(detailsUrl);
-      const html = await response.text();
+      const html = await (await fetch(detailsUrl)).text();
       const $ = cheerio.load(html);
-
-      const title = $("h1").first().text().trim();
+      const title = $("h1, .title, .page-title").first().text().trim();
       const specs = {};
 
-      // استخراج المواصفات من جداول أو قوائم
       $("tr, li").each((_, el) => {
         const key = $(el).find("th").text().trim() || $(el).text().split(":")[0]?.trim();
-        const value = $(el).find("td").text().trim() || $(el).text().split(":")[1]?.trim();
-        if (key && value) specs[key] = value;
+        const val = $(el).find("td").text().trim() || $(el).text().split(":")[1]?.trim();
+        if (key && val) specs[key] = val;
       });
 
-      return res.status(200).json({
+      return res.json({
         mode: "details",
         title,
         specs,
@@ -30,39 +27,77 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🧠 البحث عن الأجهزة
-    if (!phoneName) return res.status(400).json({ error: "Missing phone name" });
+    if (!phoneName) return res.status(400).json({ error: "يرجى كتابة اسم الهاتف" });
 
-    const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(phoneName)}`;
-    const response = await fetch(searchUrl);
-    const html = await response.text();
-    const $ = cheerio.load(html);
+    const searchEngines = [
+      {
+        name: "تلفونك",
+        url: (q) => `https://telfonak.com/?s=${encodeURIComponent(q)}`,
+        parse: ($) => {
+          const results = [];
+          $("article, .td_module_1, .td_module_3, .td_module_10, .td_module_11").each((_, el) => {
+            const title = $(el).find(".entry-title, .td-module-title, h2, h3").text().trim();
+            const link = $(el).find("a").attr("href");
+            const img = $(el).find("img").attr("src");
+            if (title && link) results.push({ title, link, img });
+          });
+          return results;
+        },
+      },
+      {
+        name: "موبوليست",
+        url: (q) => `https://www.mobolist.net/search?q=${encodeURIComponent(q)}`,
+        parse: ($) => {
+          const results = [];
+          $(".device").each((_, el) => {
+            const title = $(el).find(".device-title").text().trim();
+            const link = "https://www.mobolist.net" + $(el).find("a").attr("href");
+            const img = $(el).find("img").attr("data-src") || $(el).find("img").attr("src");
+            if (title && link) results.push({ title, link, img });
+          });
+          return results;
+        },
+      },
+      {
+        name: "موبايلز جيت",
+        url: (q) => `https://mobilesgate.com/?s=${encodeURIComponent(q)}`,
+        parse: ($) => {
+          const results = [];
+          $("article, .post").each((_, el) => {
+            const title = $(el).find("h2, h3, .entry-title").text().trim();
+            const link = $(el).find("a").attr("href");
+            const img = $(el).find("img").attr("src");
+            if (title && link) results.push({ title, link, img });
+          });
+          return results;
+        },
+      },
+    ];
 
-    const results = [];
+    const allResults = [];
 
-    // ✅ محاولة إيجاد كل أنواع الكروت الممكنة
-    $("article, .td_module_1, .td_module_3, .td_module_10, .td_module_11").each((_, el) => {
-      const link = $(el).find("a").attr("href");
-      const title = $(el).find(".entry-title, .td-module-title, h3, h2").text().trim();
-      const img = $(el).find("img").attr("src");
-      if (link && title) results.push({ title, link, img });
+    for (const site of searchEngines) {
+      try {
+        const html = await (await fetch(site.url(phoneName))).text();
+        const $ = cheerio.load(html);
+        const results = site.parse($);
+        results.forEach((r) => (r.source = site.name));
+        allResults.push(...results);
+      } catch {
+        // إذا فشل موقع ما، نكمل بالبقية
+      }
+    }
+
+    if (allResults.length === 0) {
+      return res.status(404).json({ error: `لم يتم العثور على نتائج لكلمة "${phoneName}" في أي موقع.` });
+    }
+
+    res.json({
+      mode: "list",
+      count: allResults.length,
+      results: allResults,
     });
-
-    // في حال لم تظهر نتائج عادية، جرّب منطقة أخرى
-    if (results.length === 0) {
-      $("a").each((_, el) => {
-        const link = $(el).attr("href");
-        const title = $(el).text().trim();
-        if (link && title.includes(phoneName)) results.push({ title, link });
-      });
-    }
-
-    if (results.length === 0) {
-      throw new Error(`لم يتم العثور على نتائج لاسم "${phoneName}" في موقع تلفونك.`);
-    }
-
-    res.status(200).json({ mode: "list", results });
   } catch (err) {
-    res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
