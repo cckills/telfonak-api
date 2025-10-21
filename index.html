@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>مواصفات Huawei Y9 Prime 2019</title>
+  <style>
+    body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; }
+    h1 { color: #333; }
+    .spec { margin-bottom: 10px; }
+    .label { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>مواصفات الهاتف</h1>
+  <div id="content">جاري التحميل …</div>
+
+  <script>
+    async function fetchSpecs() {
+      try {
+        const resp = await fetch('https://telfonak.com/huawei-y9-prime-2019/');
+        const htmlText = await resp.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        // مثال: نأخذ بعض العناصر
+        const modelName = doc.querySelector('h1')?.innerText || '-';
+        const specList = [];
+        doc.querySelectorAll('#content li').forEach(li => {
+          specList.push(li.innerText.trim());
+        });
+
+        // بدلاً من selector أعلاه قد تحتاج تعديل بناءً على الـDOM في الموقع
+        // في هذا المثال نأخذ بعض المواصفات الأساسية
+        const screen = doc.querySelector('li:contains("الشاشة")')?.innerText || '';
+        const processor = doc.querySelector('li:contains("المعالج")')?.innerText || '';
+        const battery  = doc.querySelector('li:contains("البطارية")')?.innerText || '';
+
+        // عرض البيانات:
+        const container = document.getElementById('content');
+        container.innerHTML = `
+          <div class="spec"><span class="label">الاسم:</span> ${modelName}</div>
+          <div class="spec"><span class="label">الشاشة:</span> ${screen}</div>
+          <div class="spec"><span class="label">المعالج:</span> ${processor}</div>
+          <div class="spec"><span class="label">البطارية:</span> ${battery}</div>
+          <h2>المواصفات الكاملة:</h2>
+          <ul>
+            ${specList.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        `;
+      } catch (err) {
+        document.getElementById('content').innerText = 'خطأ في التحميل: ' + err;
+      }
+    }
+
+    fetchSpecs();
+  </script>
+</body>
+</html>
