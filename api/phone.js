@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const phoneName = decodeURIComponent(req.query.phone || "").trim();
     const detailsUrl = req.query.url;
 
-    // 🟢 المرحلة 2: إذا تم تمرير رابط مباشر -> اجلب المواصفات فقط
+    // 📱 إذا تم تمرير رابط مباشر، اجلب تفاصيل الهاتف
     if (detailsUrl) {
       const response = await fetch(detailsUrl);
       const html = await response.text();
@@ -15,21 +15,12 @@ export default async function handler(req, res) {
       const title = $("h1").first().text().trim();
       const specs = {};
 
-      $(".specs-table tr").each((_, el) => {
-        const key = $(el).find("th").text().trim();
-        const value = $(el).find("td").text().trim();
+      // استخراج المواصفات من جداول أو قوائم
+      $("tr, li").each((_, el) => {
+        const key = $(el).find("th").text().trim() || $(el).text().split(":")[0]?.trim();
+        const value = $(el).find("td").text().trim() || $(el).text().split(":")[1]?.trim();
         if (key && value) specs[key] = value;
       });
-
-      if (Object.keys(specs).length === 0) {
-        $("li").each((_, el) => {
-          const text = $(el).text().trim();
-          if (text.includes(":")) {
-            const [k, v] = text.split(":");
-            specs[k.trim()] = v.trim();
-          }
-        });
-      }
 
       return res.status(200).json({
         mode: "details",
@@ -39,22 +30,36 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🟢 المرحلة 1: البحث عن الأجهزة
+    // 🧠 البحث عن الأجهزة
     if (!phoneName) return res.status(400).json({ error: "Missing phone name" });
+
     const searchUrl = `https://telfonak.com/?s=${encodeURIComponent(phoneName)}`;
-    const searchResponse = await fetch(searchUrl);
-    const searchHtml = await searchResponse.text();
-    const $ = cheerio.load(searchHtml);
+    const response = await fetch(searchUrl);
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
     const results = [];
-    $(".td_module_10, .td_module_11, .td_module_1, .td_module_3").each((_, el) => {
+
+    // ✅ محاولة إيجاد كل أنواع الكروت الممكنة
+    $("article, .td_module_1, .td_module_3, .td_module_10, .td_module_11").each((_, el) => {
       const link = $(el).find("a").attr("href");
-      const title = $(el).find(".entry-title, .td-module-title").text().trim();
+      const title = $(el).find(".entry-title, .td-module-title, h3, h2").text().trim();
       const img = $(el).find("img").attr("src");
       if (link && title) results.push({ title, link, img });
     });
 
-    if (results.length === 0) throw new Error("لم يتم العثور على نتائج لهذا الاسم.");
+    // في حال لم تظهر نتائج عادية، جرّب منطقة أخرى
+    if (results.length === 0) {
+      $("a").each((_, el) => {
+        const link = $(el).attr("href");
+        const title = $(el).text().trim();
+        if (link && title.includes(phoneName)) results.push({ title, link });
+      });
+    }
+
+    if (results.length === 0) {
+      throw new Error(`لم يتم العثور على نتائج لاسم "${phoneName}" في موقع تلفونك.`);
+    }
 
     res.status(200).json({ mode: "list", results });
   } catch (err) {
