@@ -6,6 +6,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     /* 🟦 قائمة المواصفات الأساسية */
+/* 🟦 قائمة المواصفات الأساسية والبطاقات */
 .aps-features-list {
   padding: 0;
   margin: 0;
@@ -18,34 +19,49 @@
 
 .aps-feature-anim {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  transition: transform 0.2s ease;
+  align-items: center;
+  gap: 15px;
+  background: #f0f8ff; /* خلفية فاتحة للبطاقة */
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .aps-feature-anim:hover {
-  transform: translateX(5px);
+  transform: translateY(-3px); /* تأثير التحويم */
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
 
 .aps-list-icon {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  background: #0d6efd1a; /* لون أزرق فاتح شبه شفاف */
-  color: #0d6efd;
-  font-size: 20px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 24px;
+  color: #fff;
 }
 
-/* أيقونات خاصة */
+/* 🟢 ألوان وأيقونات مختلفة لكل ميزة */
+.aps-icon-mobile { background-color: #0d6efd; } /* أزرق */ 
 .aps-icon-mobile::before { content: "📱"; }
+
+.aps-icon-cpu { background-color: #198754; } /* أخضر */ 
 .aps-icon-cpu::before { content: "🧠"; }
+
+.aps-icon-camera { background-color: #fd7e14; } /* برتقالي */ 
 .aps-icon-camera::before { content: "📸"; }
+
+.aps-icon-hdd { background-color: #6f42c1; } /* بنفسجي */ 
 .aps-icon-hdd::before { content: "💾"; }
+
+.aps-icon-code { background-color: #20c997; } /* أخضر فاتح */ 
 .aps-icon-code::before { content: "⚙️"; }
+
+.aps-icon-battery { background-color: #ffc107; color: #000; } /* أصفر */ 
 .aps-icon-battery::before { content: "🔋"; }
 
 .aps-feature-info {
@@ -55,7 +71,7 @@
 }
 
 .aps-feature-info strong {
-  color: #0d6efd;
+  color: #000; /* نص البارز داخل البطاقة */
 }
 
     /* 🎨 التنسيقات */
@@ -543,6 +559,7 @@ resultDiv.addEventListener("click", (e) => {
 
 </body>
 </html>
+
 
 
 
