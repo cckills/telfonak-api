@@ -226,59 +226,66 @@ async function getDetails(url) {
 
     const tabContents = tabs.map((tab, i) => {
       // 🟢 نظرة عامة
-      if (tab === "نظرة عامة") {
-        return `
-        <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
-          <div class="text-center mb-4">
-            ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
-            <h4 class="fw-bold">${data.title || "هاتف غير معروف"}</h4>
-          </div>
+     if (tab === "نظرة عامة") {
+  return `
+  <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
+    <div class="text-center mb-4">
+      ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
+      <h4 class="fw-bold">${data.title}</h4>
+    </div>
 
-          <div class="row text-center mb-4">
-            <div class="col-md-3 col-6 mb-3">
-              <div class="card shadow-sm border-0 p-3">
-                <div class="fs-3 mb-1">📱</div>
-                <div><strong>الشاشة</strong></div>
-                <small>${data.specs["الشاشة"] || "غير معروف"}</small>
-              </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3">
-              <div class="card shadow-sm border-0 p-3">
-                <div class="fs-3 mb-1">🧠</div>
-                <div><strong>المعالج</strong></div>
-                <small>${data.specs["المعالج"] || "غير محدد"}</small>
-              </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3">
-              <div class="card shadow-sm border-0 p-3">
-                <div class="fs-3 mb-1">📸</div>
-                <div><strong>الكاميرا</strong></div>
-                <small>${data.specs["الكاميرا"] || "غير محددة"}</small>
-              </div>
-            </div>
-            <div class="col-md-3 col-6 mb-3">
-              <div class="card shadow-sm border-0 p-3">
-                <div class="fs-3 mb-1">🔋</div>
-                <div><strong>البطارية</strong></div>
-                <small>${data.specs["البطارية"] || "غير محددة"}</small>
-              </div>
-            </div>
+    <ul class="aps-features-list list-unstyled">
+      <li>
+        <div class="aps-feature-anim">
+          <span class="aps-list-icon aps-icon-mobile"></span>
+          <div class="aps-feature-info">
+            <strong>الشاشة</strong>: <span>${data.specs["الشاشة"] || "غير محددة"}</span>
           </div>
-
-          <div class="row g-3">
-            ${grouped["نظرة عامة"]?.length 
-              ? grouped["نظرة عامة"].map(item => `
-                  <div class="col-md-6">
-                    <div class="p-2 border rounded bg-white shadow-sm">
-                      <strong>${item.key}:</strong> ${item.val}
-                    </div>
-                  </div>
-                `).join("")
-              : "<p class='text-muted text-center'>❌ لا توجد بيانات إضافية.</p>"
-            }
+        </div>
+      </li>
+      <li>
+        <div class="aps-feature-anim">
+          <span class="aps-list-icon aps-icon-cpu"></span>
+          <div class="aps-feature-info">
+            <strong>المعالج</strong>: <span>${data.specs["المعالج"] || "غير محدد"}</span>
           </div>
-        </div>`;
-      }
+        </div>
+      </li>
+      <li>
+        <div class="aps-feature-anim">
+          <span class="aps-list-icon aps-icon-camera"></span>
+          <div class="aps-feature-info">
+            <strong>الكاميرات</strong>: <span>${data.specs["الكاميرا"] || data.specs["الكاميرات"] || "غير محددة"}</span>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="aps-feature-anim">
+          <span class="aps-list-icon aps-icon-hdd"></span>
+          <div class="aps-feature-info">
+            <strong>الذاكرة + الرام</strong>: <span>${data.specs["الذاكرة"] || "غير محددة"} / ${data.specs["الرام"] || "غير محددة"}</span>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="aps-feature-anim">
+          <span class="aps-list-icon aps-icon-code"></span>
+          <div class="aps-feature-info">
+            <strong>نظام التشغيل</strong>: <span>${data.specs["نظام التشغيل"] || "غير محدد"}</span>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="aps-feature-anim">
+          <span class="aps-list-icon aps-icon-battery"></span>
+          <div class="aps-feature-info">
+            <strong>البطارية</strong>: <span>${data.specs["البطارية"] || "غير محددة"}</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>`;
+}
 
       // 🟢 السعر
       if (tab === "السعر") {
