@@ -244,8 +244,13 @@ async function getDetails(url, phoneImg) {
 {
   key: "الذاكرة + الرام",
   val: (() => {
-    const storage = data.specs["الذاكرة"] || data.specs["التخزين"] || "";
-    const ram = data.specs["الرام"] || "";
+    // 🔍 البحث عن المفاتيح المحتملة للذاكرة والرام
+    const storageKey = Object.keys(data.specs).find(k => /ذاكرة|تخزين|داخلية/i.test(k)) || "";
+    const ramKey = Object.keys(data.specs).find(k => /رام|الرامات|عشوائية/i.test(k)) || "";
+
+    const storage = storageKey ? data.specs[storageKey].replace(/\s*\.\s*$/, "") : "";
+    const ram = ramKey ? data.specs[ramKey].replace(/\s*\.\s*$/, "") : "";
+
     if (storage && ram) return `${storage} + ${ram}`;
     else if (storage) return storage;
     else if (ram) return ram;
@@ -253,7 +258,8 @@ async function getDetails(url, phoneImg) {
   })(),
   icon: "aps-icon-hdd"
 },
-          { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
+
+{ key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
           { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
         ].map(item => `
           <div class="col-12 col-md-6">
@@ -292,6 +298,7 @@ async function getDetails(url, phoneImg) {
     modalBody.innerHTML = `
       <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">${navTabs}</ul>
       <div class="tab-content p-3 border border-top-0 rounded-bottom bg-light mt-1" id="specTabsContent">${tabContents}</div>
+      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-3 w-100 fw-bold">🌐 عرض على موقع المصدر</a>
     `;
 
     new bootstrap.Modal(document.getElementById('specsModal')).show();
@@ -349,6 +356,7 @@ form.addEventListener("submit", async(e)=>{
         <div class="card-body">
           <h4>${data.title}</h4>
           <ul>${specsHtml}</ul>
+          <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
         </div>
       </div>`;
     }
@@ -401,6 +409,5 @@ resultDiv.addEventListener("click",(e)=>{
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
 
 
