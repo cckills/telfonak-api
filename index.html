@@ -162,19 +162,41 @@
   </div>
 
   <!-- 🟢 Bootstrap Modal لعرض المواصفات -->
+<!-- 🟢 Modal منسق لعرض المواصفات -->
 <div class="modal fade" id="specsModal" tabindex="-1" aria-labelledby="specsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="specsModalLabel">مواصفات الهاتف</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="specsModalLabel">تفاصيل الهاتف</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
       </div>
-      <div class="modal-body" id="specsModalBody">
-        <!-- سيتم ملء المحتوى هنا بواسطة جافاسكريبت -->
+      <div class="modal-body">
+        <!-- ✅ التبويبات -->
+        <ul class="nav nav-tabs" id="specTabs" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">نظرة عامة</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-network" type="button">الشبكة</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-display" type="button">الشاشة</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-camera" type="button">الكاميرا</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-hardware" type="button">العتاد</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-battery" type="button">البطارية</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-other" type="button">أخرى</button></li>
+        </ul>
+
+        <!-- ✅ محتوى كل تبويب -->
+        <div class="tab-content mt-3" id="modalTabsContent">
+          <div class="tab-pane fade show active" id="tab-overview"></div>
+          <div class="tab-pane fade" id="tab-network"></div>
+          <div class="tab-pane fade" id="tab-display"></div>
+          <div class="tab-pane fade" id="tab-camera"></div>
+          <div class="tab-pane fade" id="tab-hardware"></div>
+          <div class="tab-pane fade" id="tab-battery"></div>
+          <div class="tab-pane fade" id="tab-other"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
 
   <!-- 🧠 سكربت جافاسكريبت -->
 
@@ -254,109 +276,60 @@
     });
 
     // 🟢 عرض التفاصيل داخل نفس الصفحة
+  
 async function getDetails(url) {
-  const modalBody = document.getElementById("specsModalBody");
-  modalBody.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
+  const modalBody = document.querySelector("#specsModal .modal-body");
+  const tabs = {
+    overview: document.getElementById("tab-overview"),
+    network: document.getElementById("tab-network"),
+    display: document.getElementById("tab-display"),
+    camera: document.getElementById("tab-camera"),
+    hardware: document.getElementById("tab-hardware"),
+    battery: document.getElementById("tab-battery"),
+    other: document.getElementById("tab-other"),
+  };
+
+  // تفريغ المحتوى
+  Object.values(tabs).forEach(tab => (tab.innerHTML = ""));
+  tabs.overview.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
 
   try {
     const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
     const data = await res.json();
 
     if (data.error) {
-      modalBody.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
+      tabs.overview.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
       return;
     }
 
-    // 🧩 تصنيف المواصفات حسب الأقسام
-    const sections = {
-      الأداء: ["المعالج", "الرام", "GPU", "الشرائح", "المعالج الرسومي"],
-      الشاشة: ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث"],
-      الكاميرا: ["الكاميرا", "الخلفية", "الأمامية", "الفيديو"],
-      البطارية: ["البطارية", "الشحن", "السعة"],
-      النظام: ["نظام التشغيل", "الواجهة", "الإصدار"],
-      الذاكرة: ["الذاكرة", "التخزين", "SD"],
-      الصوت: ["الصوت", "سماعات", "جاك"],
-      الشبكة: ["الشبكة", "الواي فاي", "بلوتوث", "GPS", "5G", "4G"],
-      الأبعاد: ["الأبعاد", "الوزن", "الخامة"],
-      أخرى: []
-    };
+    document.getElementById("specsModalLabel").textContent = data.title;
 
-    const icons = {
-      الأداء: "🧠",
-      الشاشة: "📱",
-      الكاميرا: "📸",
-      البطارية: "🔋",
-      النظام: "⚙️",
-      الذاكرة: "💾",
-      الصوت: "🔈",
-      الشبكة: "🌐",
-      الأبعاد: "📏",
-      أخرى: "📋"
-    };
-
-    // 📦 تصنيف البيانات في مجموعات
-    const grouped = {};
+    // تصنيف المواصفات حسب الكلمات المفتاحية
     for (const [key, val] of Object.entries(data.specs)) {
-      let found = false;
-      for (const [section, keywords] of Object.entries(sections)) {
-        if (keywords.some(k => key.includes(k))) {
-          grouped[section] ??= [];
-          grouped[section].push({ key, val });
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        grouped["أخرى"] ??= [];
-        grouped["أخرى"].push({ key, val });
-      }
+      const lower = key.toLowerCase();
+      const line = `<p><strong>${key}:</strong> ${val}</p>`;
+
+      if (lower.includes("شبكة")) tabs.network.innerHTML += line;
+      else if (lower.includes("شاشة")) tabs.display.innerHTML += line;
+      else if (lower.includes("كاميرا")) tabs.camera.innerHTML += line;
+      else if (lower.includes("بطارية")) tabs.battery.innerHTML += line;
+      else if (lower.includes("معالج") || lower.includes("رام") || lower.includes("تخزين") || lower.includes("نظام"))
+        tabs.hardware.innerHTML += line;
+      else tabs.other.innerHTML += line;
     }
 
-    // 🧱 إنشاء تبويبات (Tabs)
-    const tabs = Object.keys(grouped).filter(k => grouped[k]?.length > 0);
-    if (tabs.length === 0) {
-      modalBody.innerHTML = `<div class='alert alert-warning'>لا توجد مواصفات متاحة.</div>`;
-      return;
-    }
-
-    const navTabs = tabs.map((tab, i) => `
-      <li class="nav-item" role="presentation">
-        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}" data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
-          ${icons[tab] || "📋"} ${tab}
-        </button>
-      </li>
-    `).join("");
-
-    const tabContents = tabs.map((tab, i) => `
-      <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
-        <ul class="list-unstyled mt-3">
-          ${grouped[tab].map(i => `<li><strong>${i.key}:</strong> ${i.val}</li>`).join("")}
-        </ul>
-      </div>
-    `).join("");
-
-    // 🎨 واجهة المودال النهائية
-    modalBody.innerHTML = `
-      ${data.img ? `<img src="${data.img}" class="img-fluid mb-3 rounded" style="object-fit:cover;">` : ""}
-      <h4 class="mb-3">${data.title}</h4>
-
-      <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">
-        ${navTabs}
-      </ul>
-
-      <div class="tab-content p-3 border border-top-0 rounded-bottom bg-light mt-1">
-        ${tabContents}
-      </div>
-
-      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-3 w-100 fw-bold">🌐 عرض على موقع المصدر</a>
+    // النظرة العامة
+    tabs.overview.innerHTML = `
+      ${data.img ? `<img src="${data.img}" class="img-fluid rounded mb-3">` : ""}
+      <h5>${data.title}</h5>
+      <p><a href="${data.source}" target="_blank" class="btn btn-outline-primary btn-sm mt-2">عرض على موقع المصدر</a></p>
     `;
 
-    // 🪄 عرض المودال
-    const specsModal = new bootstrap.Modal(document.getElementById('specsModal'));
-    specsModal.show();
-
+    // إظهار المودال
+    const modal = new bootstrap.Modal(document.getElementById("specsModal"));
+    modal.show();
   } catch (err) {
-    modalBody.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+    tabs.overview.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
   }
 }
 
