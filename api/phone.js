@@ -31,7 +31,6 @@ export default async function handler(req, res) {
         break;
       }
 
-      // ✅ استخدم for..of لدعم await
       for (const el of items.toArray()) {
         const link = $(el).find("a.image-link").attr("href");
         const title = $(el).find("a.image-link").attr("title");
@@ -53,7 +52,7 @@ export default async function handler(req, res) {
               const phoneHtml = await phonePage.text();
               const $$ = cheerio.load(phoneHtml);
 
-              // 🧠 استخراج المعالج وتحديد المختصر والتلميح
+              // 🧠 استخراج المعالج
               let fullChipset =
                 $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
                 $$("tr:contains('المعالج') span.aps-1co").text().trim() ||
@@ -62,15 +61,23 @@ export default async function handler(req, res) {
               let shortChipset = fullChipset;
               let chipsetTooltip = "";
 
-              // 🎯 تنظيف النص من رموز غير مفيدة
               fullChipset = fullChipset.replace(/\s+/g, " ").trim();
 
               if (fullChipset) {
-                // ✅ نأخذ أول جزئين فقط ليظهر كاختصار (مثلاً: Kirin 710F)
-                const match = fullChipset.match(/^([\u0600-\u06FFA-Za-z0-9\+\-\_ ]{3,20})/);
-                shortChipset = match ? match[1].trim() : fullChipset;
+                // 🧹 تنظيف النص من تفاصيل مثل النواة أو النانومتر أو التردد
+                fullChipset = fullChipset
+                  .replace(/ثماني النواة|سداسي النواة|رباعي النواة|ثنائي النواة/gi, "")
+                  .replace(/[\(\)\-\–\,]/g, " ")
+                  .replace(/\b\d+(\.\d+)?\s*GHz\b/gi, "")
+                  .replace(/\b\d+\s*nm\b/gi, "")
+                  .replace(/\s+/g, " ")
+                  .trim();
 
-                // ✨ الباقي يوضع في التلميح فقط
+                // 🎯 استخراج الاسم الأساسي فقط مثل: MediaTek MT6737 أو Kirin 710F
+                const match = fullChipset.match(/[A-Za-z\u0600-\u06FF]+\s*[A-Za-z0-9\-]+/);
+                shortChipset = match ? match[0].trim() : fullChipset;
+
+                // 💬 احتفظ بالنص الكامل في التلميح فقط
                 chipsetTooltip = fullChipset !== shortChipset ? fullChipset : "";
               }
 
@@ -89,18 +96,16 @@ export default async function handler(req, res) {
         }
       }
 
-      // 🔄 تحقق من وجود صفحة تالية
       hasNext = $(".pagination .next, .nav-links .next").length > 0;
       page++;
     }
 
-    // ✅ إذا وجد نتائج
     if (results.length > 0) {
       res.status(200).json({ mode: "list", results });
       return;
     }
 
-    // 🟡 إذا لم توجد نتائج نحاول صفحة الهاتف مباشرة
+    // 🟡 محاولة صفحة الهاتف مباشرة
     const phoneUrl = `https://telfonak.com/${encodeURIComponent(phone)}/`;
     const pageRes = await fetch(phoneUrl, {
       headers: {
