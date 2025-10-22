@@ -172,23 +172,28 @@ async function getDetails(url, phoneImg) {
         ${[
           { key:"الشاشة", val:data.specs["الشاشة"]||"غير محددة", icon:"aps-icon-mobile" },
           { key:"المعالج", val:data.specs["المعالج"]||"غير محدد", icon:"aps-icon-cpu" },
-          { key:"الكاميرات", 
-            val:(() => {
-              const back = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "غير محددة";
-              const front = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "غير محددة";
+ { key:"الكاميرات", 
+  val:(() => {
+    const backRaw = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "غير محددة";
+    const frontRaw = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "غير محددة";
 
-              if(back !== "غير محددة" && front !== "غير محددة") {
-                return `خلفية • ${back} / أمامية • ${front}`;
-              } else if(back !== "غير محددة") {
-                return `خلفية • ${back}`;
-              } else if(front !== "غير محددة") {
-                return `أمامية • ${front}`;
-              } else {
-                return "غير محددة";
-              }
-            })(),
-            icon:"aps-icon-camera" 
-          },
+    // إزالة نقاط • الأصلية
+    const back = backRaw.replace(/•\s*/g, "").trim();
+    const front = frontRaw.replace(/•\s*/g, "").trim();
+
+    if(back !== "غير محددة" && front !== "غير محددة") {
+      return `خلفية • ${back} / أمامية • ${front}`;
+    } else if(back !== "غير محددة") {
+      return `خلفية • ${back}`;
+    } else if(front !== "غير محددة") {
+      return `أمامية • ${front}`;
+    } else {
+      return "غير محددة";
+    }
+  })(),
+  icon:"aps-icon-camera" 
+},
+
           { key:"الذاكرة + الرام", val:data.specs["الذاكرة"]?`${data.specs["الذاكرة"]} / ${data.specs["الرام"]||"غير محددة"}`:"غير محددة", icon:"aps-icon-hdd" },
           { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
           { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
