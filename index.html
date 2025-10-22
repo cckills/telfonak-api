@@ -137,7 +137,7 @@
   <strong>المعالج:</strong>
   <span 
     class="chipset-badge" 
-    data-tooltip="${item.chipsetTooltip || ''}">
+    data-tooltip="${item.chipsetTooltip || `المعالج ${item.chipset || 'غير معروف'} — اضغط لعرض مزيد من التفاصيل.`}">
     ${item.chipset || "غير محدد"}
   </span>
 </p>
@@ -233,7 +233,7 @@ document.addEventListener("click", (e) => {
   tooltip.style.top = `${rect.bottom + window.scrollY + 10}px`;
   tooltip.style.left = `${rect.left + window.scrollX}px`;
 
-  // عند النقر خارج التلميح → إغلاقه
+ // عند النقر خارج التلميح → إغلاقه
   const closeTooltip = (ev) => {
     if (!tooltip.contains(ev.target) && ev.target !== badge) {
       tooltip.remove();
