@@ -53,6 +53,7 @@ export default async function handler(req, res) {
               const phoneHtml = await phonePage.text();
               const $$ = cheerio.load(phoneHtml);
 
+              // 🧠 استخراج المعالج وتحديد المختصر والتلميح
               let fullChipset =
                 $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
                 $$("tr:contains('المعالج') span.aps-1co").text().trim() ||
@@ -61,12 +62,16 @@ export default async function handler(req, res) {
               let shortChipset = fullChipset;
               let chipsetTooltip = "";
 
+              // 🎯 تنظيف النص من رموز غير مفيدة
+              fullChipset = fullChipset.replace(/\s+/g, " ").trim();
+
               if (fullChipset) {
-                // 🔍 استخراج الاسم الرئيسي (أول كلمتين أو 3)
-                const match = fullChipset.match(/([A-Za-z\u0600-\u06FF]+\s*\d*\s*\w*)/);
-                shortChipset = match ? match[0].trim() : fullChipset;
-                chipsetTooltip =
-                  fullChipset.length > shortChipset.length ? fullChipset : "";
+                // ✅ نأخذ أول جزئين فقط ليظهر كاختصار (مثلاً: Kirin 710F)
+                const match = fullChipset.match(/^([\u0600-\u06FFA-Za-z0-9\+\-\_ ]{3,20})/);
+                shortChipset = match ? match[1].trim() : fullChipset;
+
+                // ✨ الباقي يوضع في التلميح فقط
+                chipsetTooltip = fullChipset !== shortChipset ? fullChipset : "";
               }
 
               results.push({
