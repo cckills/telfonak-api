@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>بحث عن الهواتف</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body { background: #f9f9f9; font-family: 'Cairo', sans-serif; }
-    .search-modal-box { max-width: 600px; margin: 80px auto; background: #fff; border-radius: 20px; box-shadow: 0 3px 12px rgba(0,0,0,0.1); padding: 30px; }
-    .search-field { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 12px; font-size: 18px; }
-    .message { margin-top: 10px; color: #777; font-size: 14px; }
-    .phone-card img { height: 250px; object-fit: cover; border-top-left-radius: 12px; border-top-right-radius: 12px; }
-
-    .chipset-badge { background: #e3f2fd; color: #0d6efd; font-weight: 600; padding: 4px 10px; border-radius: 8px; display: inline-block; font-size: 14px; cursor: help; transition: background 0.2s; position: relative; }
-    .chipset-badge:hover { background: #d0e7ff; }
-    .tooltip-popup { position: absolute; background: #333; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 13px; max-width: 250px; line-height: 1.5; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: fadeIn 0.15s ease-in-out; }
-    .tooltip-popup::after { content: ""; position: absolute; top: -6px; left: 15px; border-width: 6px; border-style: solid; border-color: transparent transparent #333 transparent; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .search-modal-box { max-width: 700px; margin: 48px auto; background:#fff; border-radius:14px; padding:24px; box-shadow:0 6px 20px rgba(0,0,0,0.06); }
+    .search-field { width:100%; padding:12px; border:1px solid #e6e6e6; border-radius:10px; font-size:16px; }
+    .phone-card img { height:220px; object-fit:cover; border-top-left-radius:10px; border-top-right-radius:10px; }
+    .chipset-badge {
+      background:#e3f2fd; color:#0d6efd; font-weight:600; padding:4px 10px; border-radius:8px; display:inline-block; font-size:14px;
+      cursor:help; position:relative;
+    }
+    .tooltip-popup {
+      position: absolute; background:#222; color:#fff; padding:8px 10px; border-radius:8px; font-size:13px; max-width:300px; z-index:9999;
+      box-shadow:0 6px 18px rgba(0,0,0,0.25);
+    }
+    .tooltip-popup::after { content:""; position:absolute; top:-6px; left:18px; border-width:6px; border-style:solid; border-color:transparent transparent #222 transparent; }
   </style>
 </head>
 <body>
 
-  <!-- search box -->
   <div class="search-modal-box" role="dialog" aria-modal="true">
-    <form id="searchForm" class="search-form text-center" onsubmit="return false;">
-      <input type="search" class="search-field mb-3" id="phoneInput" name="s" placeholder="ابحث عن اسم الهاتف..." required>
-      <button type="submit" id="searchBtn" class="btn btn-primary w-100 py-2 fw-bold">🔍 بحث</button>
-      <p class="message mt-2">اكتب كلمة البحث ثم اضغط زر البحث أو <em>Enter</em></p>
+    <form id="searchForm" class="d-flex gap-2">
+      <input id="phoneInput" class="search-field" type="search" name="s" placeholder="ابحث عن اسم الهاتف (مثال: y9 أو Huawei Y9)" required />
+      <button class="btn btn-primary" type="submit">🔍 بحث</button>
     </form>
+    <p class="mt-2 text-muted" style="font-size:13px">اكتب اسم الجهاز ثم اضغط بحث أو Enter</p>
   </div>
 
-  <div class="container">
+  <div class="container mb-5">
     <div id="result"></div>
   </div>
 
-  <!-- Modal -->
+  <!-- Bootstrap modal -->
   <div class="modal fade" id="specsModal" tabindex="-1" aria-labelledby="specsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
@@ -46,154 +48,203 @@
     </div>
   </div>
 
-  <!-- bootstrap bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
     const form = document.getElementById("searchForm");
     const input = document.getElementById("phoneInput");
     const resultDiv = document.getElementById("result");
-    const searchBtn = document.getElementById("searchBtn");
 
-    // helper: render cards
-    function renderList(results) {
-      let cards = "<div class='row'>";
-      for (const item of results) {
-        cards += `
-          <div class="col-md-4 mb-4">
-            <div class="card phone-card shadow h-100">
-              ${item.img ? `<img src="${item.img}" class="card-img-top" alt="${item.title}">` : ""}
-              <div class="card-body d-flex flex-column">
-                <h6 class="card-title">${item.title}</h6>
-                <p class="text-muted mb-2">
-                  <strong>المعالج:</strong>
-                  <span class="chipset-badge" data-tooltip="${item.chipsetTooltip || `المعالج ${item.chipset || 'غير معروف'}`}">
-                    ${item.chipset || "غير محدد"}
-                  </span>
-                </p>
-                <!-- type="button" مهم لمنع سلوك submit -->
-                <button type="button" class="btn btn-primary mt-auto" data-url="${item.link}">عرض المواصفات</button>
-              </div>
-            </div>
-          </div>`;
-      }
-      cards += "</div>";
-      resultDiv.innerHTML = cards;
+    // مساعدة لفلترة النصوص الفارغة بأمان في attributes
+    function escapeAttr(s) {
+      if (!s) return "";
+      return s.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
     }
 
-    // البحث (يمكن الضغط زر أو Enter)
-    async function doSearch() {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
       const phone = input.value.trim();
       if (!phone) return;
-      resultDiv.innerHTML = `<div class='alert alert-info'>🔍 جاري البحث عن "${phone}"...</div>`;
+
+      resultDiv.innerHTML = `<div class="alert alert-info">🔍 جاري البحث عن "${phone}"...</div>`;
+
       try {
         const res = await fetch(`/api/${encodeURIComponent(phone)}`);
         const data = await res.json();
-        if (data.error) { resultDiv.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`; return; }
-        if (!data.mode || data.mode === "list") renderList(data.results);
-        else if (data.mode === "details") {
-          let specsHtml = "";
-          for (const [k, v] of Object.entries(data.specs)) specsHtml += `<li><strong>${k}:</strong> ${v}</li>`;
-          resultDiv.innerHTML = `
-            <div class="card shadow mt-4">
-              ${data.img ? `<img src="${data.img}" class="card-img-top" style="height:300px;object-fit:cover;">` : ""}
-              <div class="card-body">
-                <h4>${data.title}</h4>
-                <ul>${specsHtml}</ul>
-                <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
+
+        if (data.error) {
+          resultDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+
+        // لو الـ API أعاد تفاصيل مباشرة
+        if (data.mode === "details") {
+          openSpecsModalFromDetails(data);
+          return;
+        }
+
+        // قائمة النتائج
+        const results = data.results || [];
+        if (!results.length) {
+          resultDiv.innerHTML = `<div class="alert alert-warning">❌ لم يتم العثور على نتائج لهذا الاسم.</div>`;
+          return;
+        }
+
+        let html = "<div class='row'>";
+        for (const item of results) {
+          // item.chipset  و item.chipsetTooltip مفترضا أن يأتي بهما الـ API
+          const chipsetShort = escapeAttr(item.chipset || "غير محدد");
+          const chipsetFull = escapeAttr(item.chipsetTooltip || "");
+          const imgTag = item.img ? `<img src="${item.img}" class="card-img-top" alt="${escapeAttr(item.title)}">` : "";
+          const url = escapeAttr(item.link || item.source || "");
+
+          html += `
+            <div class="col-md-4 mb-4">
+              <div class="card phone-card h-100 shadow-sm">
+                ${imgTag}
+                <div class="card-body d-flex flex-column">
+                  <h6 class="card-title mb-2">${escapeAttr(item.title)}</h6>
+                  <p class="text-muted mb-3"><strong>المعالج:</strong>
+                    <span class="chipset-badge" data-tooltip="${chipsetFull}">${chipsetShort}</span>
+                  </p>
+                  <button class="btn btn-primary mt-auto" data-url="${url}">عرض المواصفات</button>
+                </div>
               </div>
             </div>`;
         }
+        html += "</div>";
+        resultDiv.innerHTML = html;
+
       } catch (err) {
-        console.error("Search error:", err);
-        resultDiv.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+        console.error(err);
+        resultDiv.innerHTML = `<div class="alert alert-danger">⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
       }
+    });
+
+    // فتح مودال من استجابة details
+    function openSpecsModalFromDetails(data) {
+      const modalBody = document.getElementById("specsModalBody");
+      const title = data.title || "";
+      const img = data.img || "";
+      const specs = data.specs || {};
+      let specsHtml = "";
+      for (const [k,v] of Object.entries(specs)) {
+        specsHtml += `<li><strong>${k}:</strong> ${v}</li>`;
+      }
+      modalBody.innerHTML = `
+        ${img ? `<img src="${img}" class="img-fluid mb-3" style="object-fit:cover;">` : ""}
+        <h4>${title}</h4>
+        <ul>${specsHtml}</ul>
+        <a href="${data.source || '#'}" target="_blank" class="btn btn-outline-primary mt-2">عرض على الموقع الأصلي</a>
+      `;
+      const specsModal = new bootstrap.Modal(document.getElementById('specsModal'));
+      specsModal.show();
     }
 
-    // وصل الحدث للزر والحقل (Enter)
-    searchBtn.addEventListener("click", doSearch);
-    form.addEventListener("submit", (e) => { e.preventDefault(); doSearch(); });
+    // تحميل تفاصيل الهاتف عند النقر على زر (delegation)
+    resultDiv.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-url]");
+      if (!btn) return;
+      const url = btn.dataset.url;
+      if (!url) return;
 
-    // getDetails يعرض المحتوى داخل المودال
-    async function getDetails(url) {
-      console.log("getDetails called for:", url);
+      // ضع رسالة انتظار داخل المودال
       const modalBody = document.getElementById("specsModalBody");
-      modalBody.innerHTML = `<div class='d-flex align-items-center'><div class="spinner-border me-2" role="status" aria-hidden="true"></div> جارٍ جلب المواصفات...</div>`;
+      modalBody.innerHTML = `<div class="alert alert-info">📱 جاري جلب المواصفات...</div>`;
+      const specsModal = new bootstrap.Modal(document.getElementById('specsModal'));
+      specsModal.show(); // نعرض المودال فوراً ليشعر المستخدم بالاستجابة
+
       try {
         const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
         const data = await res.json();
-        if (data.error) { modalBody.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`; return; }
+        if (data.error) {
+          modalBody.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+        // عرض التفاصيل
         let specsHtml = "";
-        for (const [key, val] of Object.entries(data.specs)) specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
+        for (const [k,v] of Object.entries(data.specs || {})) {
+          specsHtml += `<li><strong>${k}:</strong> ${v}</li>`;
+        }
         modalBody.innerHTML = `
           ${data.img ? `<img src="${data.img}" class="img-fluid mb-3" style="object-fit:cover;">` : ""}
-          <h4>${data.title}</h4>
+          <h4>${data.title || ""}</h4>
           <ul>${specsHtml}</ul>
-          <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
+          <a href="${data.source || url}" target="_blank" class="btn btn-outline-primary mt-2">فتح في الموقع</a>
         `;
-        const specsModal = new bootstrap.Modal(document.getElementById('specsModal'));
-        specsModal.show();
       } catch (err) {
-        console.error("getDetails error:", err);
-        modalBody.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+        console.error(err);
+        modalBody.innerHTML = `<div class="alert alert-danger">⚠️ حدث خطأ أثناء جلب مواصفات الهاتف.</div>`;
+      }
+    });
+
+    // TOOLTIP: عرض تلميح واحد فقط — يعمل على العناصر المضافة ديناميكياً
+    let currentTooltip = null;
+
+    function removeTooltip() {
+      if (currentTooltip) {
+        currentTooltip.remove();
+        currentTooltip = null;
       }
     }
 
-    // Delegated click listener — أكثر موثوقية لالتقاط أزرار dynamically-added
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-url]");
-      if (!btn) return;
-      const url = btn.getAttribute("data-url");
-      if (!url) {
-        console.warn("زر بدون data-url");
-        return;
-      }
-      getDetails(url);
-    });
-
-    // tooltips handling (كما في كودك)
+    // عند النقر على البادج (لأجهزة اللمس) أو عند المرور بالماوس
     document.addEventListener("click", (e) => {
       const badge = e.target.closest(".chipset-badge");
       if (!badge) return;
-      const tooltipText = badge.getAttribute("data-tooltip");
-      if (!tooltipText) return;
-      document.querySelectorAll(".tooltip-popup").forEach(el => el.remove());
-      const tooltip = document.createElement("div");
-      tooltip.className = "tooltip-popup";
-      tooltip.textContent = tooltipText;
-      document.body.appendChild(tooltip);
+      const txt = badge.getAttribute("data-tooltip") || "";
+      if (!txt) return;
+      // toggle: إذا التلميح موجود لنفس البادج أزل، وإلا اعرض
+      if (currentTooltip && currentTooltip._for === badge) { removeTooltip(); return; }
+      removeTooltip();
+      const tip = document.createElement("div");
+      tip.className = "tooltip-popup";
+      tip.textContent = txt;
+      document.body.appendChild(tip);
       const rect = badge.getBoundingClientRect();
-      tooltip.style.top = `${rect.bottom + window.scrollY + 10}px`;
-      tooltip.style.left = `${rect.left + window.scrollX}px`;
-      const closeTooltip = (ev) => {
-        if (!tooltip.contains(ev.target) && ev.target !== badge) {
-          tooltip.remove();
-          document.removeEventListener("click", closeTooltip);
-        }
-      };
-      setTimeout(() => document.addEventListener("click", closeTooltip), 10);
+      tip.style.top = `${rect.bottom + window.scrollY + 8}px`;
+      tip.style.left = `${Math.max(8, rect.left + window.scrollX)}px`;
+      tip._for = badge;
+      currentTooltip = tip;
+
+      // إغلاق عند النقر في أي مكان آخر
+      setTimeout(() => {
+        const onDocClick = (ev) => {
+          if (!tip.contains(ev.target) && ev.target !== badge) {
+            removeTooltip();
+            document.removeEventListener("click", onDocClick);
+          }
+        };
+        document.addEventListener("click", onDocClick);
+      }, 10);
     });
 
+    // عرض عند المرور (desktop)
     document.addEventListener("mouseover", (e) => {
       const badge = e.target.closest(".chipset-badge");
       if (!badge) return;
-      const tooltipText = badge.getAttribute("data-tooltip");
-      if (!tooltipText) return;
-      if (badge.dataset.tooltipOpen === "true") return;
-      badge.dataset.tooltipOpen = "true";
-      const tooltip = document.createElement("div");
-      tooltip.className = "tooltip-popup";
-      tooltip.textContent = tooltipText;
-      document.body.appendChild(tooltip);
+      const txt = badge.getAttribute("data-tooltip") || "";
+      if (!txt) return;
+      // منع تكرار التلميح لنفس البادج
+      if (currentTooltip && currentTooltip._for === badge) return;
+      removeTooltip();
+      const tip = document.createElement("div");
+      tip.className = "tooltip-popup";
+      tip.textContent = txt;
+      document.body.appendChild(tip);
       const rect = badge.getBoundingClientRect();
-      tooltip.style.top = `${rect.bottom + window.scrollY + 10}px`;
-      tooltip.style.left = `${rect.left + window.scrollX}px`;
+      tip.style.top = `${rect.bottom + window.scrollY + 8}px`;
+      tip.style.left = `${Math.max(8, rect.left + window.scrollX)}px`;
+      tip._for = badge;
+      currentTooltip = tip;
+
       badge.addEventListener("mouseleave", () => {
-        tooltip.remove();
-        badge.dataset.tooltipOpen = "false";
+        if (currentTooltip && currentTooltip._for === badge) removeTooltip();
       }, { once: true });
     });
 
+    // إزالة تلميح عند تمرير الماوس أو تغيير الصفحة/تمرير
+    window.addEventListener("scroll", removeTooltip);
+    window.addEventListener("resize", removeTooltip);
   </script>
 </body>
 </html>
