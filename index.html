@@ -175,32 +175,37 @@
     });
 
     // 🟢 عرض التفاصيل داخل نفس الصفحة
-    async function getDetails(url) {
-      resultDiv.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
-      const res = await fetch(`/api/${encodeURIComponent("details")}?url=${encodeURIComponent(url)}`);
-      const data = await res.json();
+async function getDetails(url) {
+  resultDiv.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
+  try {
+    const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
 
-      if (data.error) {
-        resultDiv.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
-        return;
-      }
-
-      let specsHtml = "";
-      for (const [key, val] of Object.entries(data.specs)) {
-        specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
-      }
-
-      resultDiv.innerHTML = `
-        <div class="card shadow mt-4">
-          ${data.img ? `<img src="${data.img}" class="card-img-top" style="height:300px;object-fit:cover;">` : ""}
-          <div class="card-body">
-            <h4>${data.title}</h4>
-            <ul>${specsHtml}</ul>
-            <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
-          </div>
-        </div>
-      `;
+    if (data.error) {
+      resultDiv.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
+      return;
     }
+
+    let specsHtml = "";
+    for (const [key, val] of Object.entries(data.specs)) {
+      specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
+    }
+
+    resultDiv.innerHTML = `
+      <div class="card shadow mt-4">
+        ${data.img ? `<img src="${data.img}" class="card-img-top" style="height:300px;object-fit:cover;">` : ""}
+        <div class="card-body">
+          <h4>${data.title}</h4>
+          <ul>${specsHtml}</ul>
+          <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    resultDiv.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+  }
+}
+
 
 // 🧠 تفعيل التلميحات على الماوس والموبايل
 document.addEventListener("click", (e) => {
