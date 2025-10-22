@@ -213,7 +213,6 @@ async function getDetails(url) {
 
     // 🧱 إنشاء التبويبات
     // ✅ نأخذ الترتيب كما في كائن sections فقط، دون تكرار
-    const tabs = Object.keys(sections).filter(section => grouped[section] && grouped[section].length > 0);
 
     // 🧱 إنشاء تبويبات بالترتيب الصحيح
     const navTabs = tabs.map((tab, i) => `
