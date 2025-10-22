@@ -11,7 +11,10 @@ export default async function handler(req, res) {
 
     // 🔁 التكرار على صفحات البحث
     while (hasNext && page <= 5) {
-      const searchUrl = `https://telfonak.com/page/${page}/?s=${encodeURIComponent(phone)}`;
+      const searchUrl =
+  page === 1
+    ? `https://telfonak.com/?s=${encodeURIComponent(phone)}`
+    : `https://telfonak.com/page/${page}/?s=${encodeURIComponent(phone)}`;
       console.log("⏳ Fetching:", searchUrl);
 
       const response = await fetch(searchUrl, {
@@ -24,7 +27,7 @@ export default async function handler(req, res) {
       if (!response.ok) break;
       const html = await response.text();
       const $ = cheerio.load(html);
-      const items = $(".media");
+      const items = $(".media, .post, article");
 
       if (items.length === 0) {
         hasNext = false;
@@ -148,3 +151,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "حدث خطأ أثناء جلب البيانات." });
   }
 }
+
