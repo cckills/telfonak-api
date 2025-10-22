@@ -209,8 +209,12 @@ async function getDetails(url) {
       if (!found) (grouped["أخرى"] ??= []).push({ key, val });
     }
 
-    // ✅ الحفاظ على الترتيب الثابت
-    const tabs = Object.keys(sections).filter(sec => grouped[sec]?.length > 0);
+
+
+
+    // ✅ الحفاظ على الترتيب الثابتشششش
+    // ✅ عرض جميع الأقسام بالترتيب الثابت حتى لو فارغة
+    const tabs = Object.keys(sections);
 
     const navTabs = tabs.map((tab, i) => `
       <li class="nav-item" role="presentation">
@@ -220,14 +224,14 @@ async function getDetails(url) {
       </li>
     `).join("");
 
-    // 🧾 محتوى التبويبات
     const tabContents = tabs.map((tab, i) => {
+      // 🟢 نظرة عامة
       if (tab === "نظرة عامة") {
         return `
         <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
           <div class="text-center mb-4">
             ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
-            <h4 class="fw-bold">${data.title}</h4>
+            <h4 class="fw-bold">${data.title || "هاتف غير معروف"}</h4>
           </div>
 
           <div class="row text-center mb-4">
@@ -262,17 +266,21 @@ async function getDetails(url) {
           </div>
 
           <div class="row g-3">
-            ${grouped["نظرة عامة"]?.map(item => `
-              <div class="col-md-6">
-                <div class="p-2 border rounded bg-white shadow-sm">
-                  <strong>${item.key}:</strong> ${item.val}
-                </div>
-              </div>
-            `).join("") || "<p class='text-muted'>لا توجد تفاصيل إضافية.</p>"}
+            ${grouped["نظرة عامة"]?.length 
+              ? grouped["نظرة عامة"].map(item => `
+                  <div class="col-md-6">
+                    <div class="p-2 border rounded bg-white shadow-sm">
+                      <strong>${item.key}:</strong> ${item.val}
+                    </div>
+                  </div>
+                `).join("")
+              : "<p class='text-muted text-center'>❌ لا توجد بيانات إضافية.</p>"
+            }
           </div>
         </div>`;
       }
 
+      // 🟢 السعر
       if (tab === "السعر") {
         const priceVal = grouped["السعر"]?.[0]?.val || "غير متوفر";
         return `
@@ -284,20 +292,21 @@ async function getDetails(url) {
         </div>`;
       }
 
+      // 🟢 باقي الأقسام
+      const sectionItems = grouped[tab]?.length
+        ? grouped[tab].map(item => `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <strong>${item.key}</strong>
+              <span>${item.val}</span>
+            </li>`).join("")
+        : "<li class='list-group-item text-center text-muted'>❌ لا توجد بيانات متاحة.</li>";
+
       return `
         <div class="tab-pane fade" id="content-${i}" role="tabpanel">
-          <ul class="list-group list-group-flush">
-            ${grouped[tab].map(item => `
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <strong>${item.key}</strong>
-                <span>${item.val}</span>
-              </li>
-            `).join("")}
-          </ul>
+          <ul class="list-group list-group-flush">${sectionItems}</ul>
         </div>`;
     }).join("");
 
-    // 💎 عرض المودال الكامل
     modalBody.innerHTML = `
       <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">
         ${navTabs}
