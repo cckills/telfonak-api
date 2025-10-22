@@ -122,7 +122,8 @@
         }
 
         // ✅ إذا كانت النتائج قائمة (بحث عام)
-        if (data.mode === "list") {
+        if (!data.mode || data.mode === "list") {
+
           let cards = "<div class='row'>";
           for (const item of data.results) {
             cards += `
@@ -176,6 +177,8 @@
 
     // 🟢 عرض التفاصيل داخل نفس الصفحة
 async function getDetails(url) {
+    document.querySelectorAll(".tooltip-popup").forEach(el => el.remove());
+
   resultDiv.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
   try {
     const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
