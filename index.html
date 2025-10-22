@@ -209,7 +209,7 @@ async function getDetails(url) {
   modalBody.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
 
   try {
-        const res = await fetch(`/api/${encodeURIComponent(url)}`);
+const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
 
     const data = await res.json();
 
@@ -313,3 +313,4 @@ resultDiv.addEventListener("click", (e) => {
 
 </body>
 </html>
+
