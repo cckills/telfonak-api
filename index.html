@@ -17,34 +17,6 @@
   margin-bottom: 15px;
 }
 
-.aps-feature-anim {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: #f0f8ff; /* خلفية فاتحة للبطاقة */
-  padding: 15px 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.aps-feature-anim:hover {
-  transform: translateY(-3px); /* تأثير التحويم */
-  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-}
-
-.aps-list-icon {
-  flex-shrink: 0;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #fff;
-}
-
 /* 🟢 ألوان وأيقونات مختلفة لكل ميزة */
 .aps-icon-mobile { background-color: #0d6efd; } /* أزرق */ 
 .aps-icon-mobile::before { content: "📱"; }
@@ -64,15 +36,54 @@
 .aps-icon-battery { background-color: #ffc107; color: #000; } /* أصفر */ 
 .aps-icon-battery::before { content: "🔋"; }
 
-.aps-feature-info {
-  flex: 1;
-  font-size: 15px;
-  line-height: 1.4;
+/* البطاقة */
+.aps-feature-card {
+  background: #f0f8ff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.aps-feature-info strong {
-  color: #000; /* نص البارز داخل البطاقة */
+.aps-feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
+
+.aps-list-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  margin-bottom: 10px; /* مسافة بين الأيقونة والنص */
+}
+
+/* ألوان مختلفة لكل أيقونة */
+.aps-icon-mobile { background-color: #0d6efd; }
+.aps-icon-cpu { background-color: #198754; }
+.aps-icon-camera { background-color: #fd7e14; }
+.aps-icon-hdd { background-color: #6f42c1; }
+.aps-icon-code { background-color: #20c997; }
+.aps-icon-battery { background-color: #ffc107; color: #000; }
+
+.aps-feature-info strong {
+  color: #000;
+  font-size: 15px;
+}
+
+.aps-feature-info span {
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+}
+
 
     /* 🎨 التنسيقات */
     body { background: #f9f9f9; font-family: 'Cairo', sans-serif; }
@@ -312,14 +323,15 @@ if (tab === "نظرة عامة") {
           { key: "نظام التشغيل", val: data.specs["نظام التشغيل"] || "غير محدد", icon: "aps-icon-code" },
           { key: "البطارية", val: data.specs["البطارية"] || "غير محددة", icon: "aps-icon-battery" }
         ].map(item => `
-          <div class="col-md-6 col-lg-4">
-            <div class="aps-feature-anim">
-              <span class="aps-list-icon ${item.icon}"></span>
-              <div class="aps-feature-info">
-                <strong>${item.key}</strong>: <span>${item.val}</span>
-              </div>
-            </div>
-          </div>
+         <div class="col-md-6 col-lg-4">
+    <div class="aps-feature-card">
+      <div class="aps-list-icon ${item.icon}"></div>
+      <div class="aps-feature-info text-center mt-2">
+        <strong>${item.key}</strong><br>
+        <span>${item.val}</span>
+      </div>
+    </div>
+  </div>
         `).join("")}
       </div>
     </div>
