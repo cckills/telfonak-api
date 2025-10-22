@@ -81,6 +81,56 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+.tab-content {
+  background-color: #fff;
+}
+
+
+
+
+
+/* 📱 تحسين التبويبات للموبايل */
+.nav-tabs {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  flex-wrap: nowrap !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #0d6efd transparent;
+}
+
+.nav-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.nav-tabs::-webkit-scrollbar-thumb {
+  background: #0d6efd;
+  border-radius: 3px;
+}
+
+.nav-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-tabs .nav-item {
+  flex: 0 0 auto;
+}
+
+.nav-tabs .nav-link {
+  font-weight: 600;
+  color: #0d6efd;
+  border-radius: 10px 10px 0 0;
+  padding: 8px 14px;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+
   </style>
 </head>
 <body>
@@ -209,8 +259,7 @@ async function getDetails(url) {
   modalBody.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
 
   try {
-const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
-
+    const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
     const data = await res.json();
 
     if (data.error) {
@@ -218,19 +267,91 @@ const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
       return;
     }
 
-    let specsHtml = "";
+    // 🧩 تصنيف المواصفات حسب الأقسام
+    const sections = {
+      الأداء: ["المعالج", "الرام", "GPU", "الشرائح", "المعالج الرسومي"],
+      الشاشة: ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث"],
+      الكاميرا: ["الكاميرا", "الخلفية", "الأمامية", "الفيديو"],
+      البطارية: ["البطارية", "الشحن", "السعة"],
+      النظام: ["نظام التشغيل", "الواجهة", "الإصدار"],
+      الذاكرة: ["الذاكرة", "التخزين", "SD"],
+      الصوت: ["الصوت", "سماعات", "جاك"],
+      الشبكة: ["الشبكة", "الواي فاي", "بلوتوث", "GPS", "5G", "4G"],
+      الأبعاد: ["الأبعاد", "الوزن", "الخامة"],
+      أخرى: []
+    };
+
+    const icons = {
+      الأداء: "🧠",
+      الشاشة: "📱",
+      الكاميرا: "📸",
+      البطارية: "🔋",
+      النظام: "⚙️",
+      الذاكرة: "💾",
+      الصوت: "🔈",
+      الشبكة: "🌐",
+      الأبعاد: "📏",
+      أخرى: "📋"
+    };
+
+    // 📦 تصنيف البيانات في مجموعات
+    const grouped = {};
     for (const [key, val] of Object.entries(data.specs)) {
-      specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
+      let found = false;
+      for (const [section, keywords] of Object.entries(sections)) {
+        if (keywords.some(k => key.includes(k))) {
+          grouped[section] ??= [];
+          grouped[section].push({ key, val });
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        grouped["أخرى"] ??= [];
+        grouped["أخرى"].push({ key, val });
+      }
     }
 
+    // 🧱 إنشاء تبويبات (Tabs)
+    const tabs = Object.keys(grouped).filter(k => grouped[k]?.length > 0);
+    if (tabs.length === 0) {
+      modalBody.innerHTML = `<div class='alert alert-warning'>لا توجد مواصفات متاحة.</div>`;
+      return;
+    }
+
+    const navTabs = tabs.map((tab, i) => `
+      <li class="nav-item" role="presentation">
+        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}" data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
+          ${icons[tab] || "📋"} ${tab}
+        </button>
+      </li>
+    `).join("");
+
+    const tabContents = tabs.map((tab, i) => `
+      <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
+        <ul class="list-unstyled mt-3">
+          ${grouped[tab].map(i => `<li><strong>${i.key}:</strong> ${i.val}</li>`).join("")}
+        </ul>
+      </div>
+    `).join("");
+
+    // 🎨 واجهة المودال النهائية
     modalBody.innerHTML = `
-      ${data.img ? `<img src="${data.img}" class="img-fluid mb-3" style="object-fit:cover;">` : ""}
-      <h4>${data.title}</h4>
-      <ul>${specsHtml}</ul>
-      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
+      ${data.img ? `<img src="${data.img}" class="img-fluid mb-3 rounded" style="object-fit:cover;">` : ""}
+      <h4 class="mb-3">${data.title}</h4>
+
+      <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">
+        ${navTabs}
+      </ul>
+
+      <div class="tab-content p-3 border border-top-0 rounded-bottom bg-light mt-1">
+        ${tabContents}
+      </div>
+
+      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-3 w-100 fw-bold">🌐 عرض على موقع المصدر</a>
     `;
 
-    // إظهار الموديول
+    // 🪄 عرض المودال
     const specsModal = new bootstrap.Modal(document.getElementById('specsModal'));
     specsModal.show();
 
@@ -313,4 +434,5 @@ resultDiv.addEventListener("click", (e) => {
 
 </body>
 </html>
+
 
