@@ -177,10 +177,13 @@ async function getDetails(url, phoneImg) {
     const backRaw = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "";
     const frontRaw = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "";
 
-    const extractMP = (text) => {
-      const matches = text.match(/\d+/g); // نأخذ فقط الأرقام
-      return matches ? matches.join("+") + " م.ب" : "غير محددة";
-    };
+  const extractMP = (text) => {
+  const matches = text.match(/(\d+)\s*(?:ميجا|م\.ب)/g); // فقط الأرقام المتبوعة بميجا أو م.ب
+  if (!matches) return "غير محددة";
+  const clean = matches.map(m => m.replace(/\D/g, "")); // نحذف أي حروف ونحتفظ بالأرقام فقط
+  return clean.join("+") + " م.ب";
+};
+
 
     const back = extractMP(backRaw);
     const front = extractMP(frontRaw);
