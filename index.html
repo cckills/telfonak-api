@@ -207,7 +207,8 @@ document.addEventListener("click", (e) => {
   const badge = e.target.closest(".chipset-badge");
   if (!badge) return;
 
-  const tooltipText = badge.getAttribute("title");
+  const tooltipText = badge.getAttribute("data-tooltip");
+
   if (!tooltipText) return;
 
   // إزالة أي تلميح مفتوح سابقًا
@@ -239,7 +240,8 @@ document.addEventListener("mouseover", (e) => {
   const badge = e.target.closest(".chipset-badge");
   if (!badge) return;
 
-  const tooltipText = badge.getAttribute("title");
+  const tooltipText = badge.getAttribute("data-tooltip");
+
   if (!tooltipText) return;
 
   // إذا كان التلميح مفتوح مسبقًا → لا تكرار
