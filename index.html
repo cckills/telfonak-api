@@ -171,23 +171,36 @@ async function getDetails(url, phoneImg) {
       <div class="row g-3 justify-content-start">
         ${[
 { 
+  
   key:"الشاشة", 
   val:(() => {
     const screenRaw = data.specs["الشاشة"] || "غير محددة";
 
-    // 🔍 نوع الشاشة
+    if (screenRaw === "غير محددة") return screenRaw;
+
+    // 🔍 استخراج نوع الشاشة
     const typeMatch = screenRaw.match(/(IPS\s*LCD|AMOLED|OLED|Super\s*AMOLED|LTPO|PLS|TFT)/i);
     const type = typeMatch ? typeMatch[0].replace(/\s+/g, " ").trim().toUpperCase() : "";
 
-    // 🔍 الحجم بالبوصة
+    // 🔍 استخراج الحجم بالبوصة
     const sizeMatch = screenRaw.match(/(\d+(\.\d+)?)\s*(بوصة|بوصه|inch|")/i);
     const size = sizeMatch ? `${sizeMatch[1]} بوصة` : "";
 
-    // 🔍 الدقة
-    const resMatch = screenRaw.match(/(FHD\+?|HD\+?|QHD\+?|UHD\+?|4K|1080x\d+|720x\d+)/i);
-    const res = resMatch ? `بدقة ${resMatch[0].toUpperCase()}` : "";
+    // 🔍 استخراج الدقة
+    let res = "";
+    if (/FHD/i.test(screenRaw)) res = "بدقة FHD+";
+    else if (/HD\+/i.test(screenRaw)) res = "بدقة HD+";
+    else if (/QHD/i.test(screenRaw)) res = "بدقة QHD+";
+    else if (/UHD|4K/i.test(screenRaw)) res = "بدقة 4K";
+    else {
+      const resMatch = screenRaw.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/i);
+      if (resMatch) {
+        const width = Math.max(resMatch[1], resMatch[2]);
+        res = width >= 2000 ? "بدقة FHD+" : "بدقة HD+";
+      }
+    }
 
-    // 🧩 تركيب النتيجة النهائية
+    // 📱 تركيب النتيجة النهائية
     if (type || size || res) {
       return `${type}${type && size ? " بحجم " : ""}${size}${(type || size) && res ? " " : ""}${res}`.trim();
     } else {
