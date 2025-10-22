@@ -177,10 +177,9 @@ async function getDetails(url, phoneImg) {
     const backRaw = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "";
     const frontRaw = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "";
 
-    // دالة لاستخراج أرقام الميجابكسل فقط من النص
     const extractMP = (text) => {
-      const matches = text.match(/\d+\s*ميجابكسل/gi); // تبحث عن "16 ميجابكسل"
-      return matches ? matches.map(m=>m.replace(/\s+/g,"")).join("+") : "غير محددة";
+      const matches = text.match(/\d+/g); // نأخذ فقط الأرقام
+      return matches ? matches.join("+") + " م.ب" : "غير محددة";
     };
 
     const back = extractMP(backRaw);
