@@ -56,10 +56,11 @@ export default async function handler(req, res) {
               const $$ = cheerio.load(phoneHtml);
 
               // 🧠 استخراج المعالج
-              let fullChipset =
-                $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
-                $$("tr:contains('المعالج') span.aps-1co").text().trim() ||
-                "";
+let fullChipset =
+  $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
+  $$("tr:contains('المعالج') td.aps-attr-value").text().trim() ||
+  "";
+
 
               let shortChipset = fullChipset;
               let chipsetTooltip = "";
