@@ -260,7 +260,27 @@ async function getDetails(url, phoneImg) {
 },
 
 { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
-          { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
+{
+  key: "البطارية",
+  val: (() => {
+    // 🔋 جلب القيم مباشرة من الموقع
+    const capacity = data.specs["سعة البطارية"] || data.specs["Battery Capacity"] || "";
+    const charging = data.specs["قدرة الشحن"] || data.specs["الشحن"] || "";
+
+    if (!capacity && !charging) return "غير محددة";
+
+    // ⚙️ تنظيف النصوص قليلاً
+    const capClean = capacity.replace(/ملي|مللي|mAh/gi, "").trim().replace(/\.+$/, "") + " م.أ";
+    const chargeClean = charging.replace(/واط|W/gi, "").trim().replace(/\.+$/, "") + " واط";
+
+    // 🧩 دمج الناتج بشكل منسق
+    if (capacity && charging) return `${capClean} / ${chargeClean}`;
+    if (capacity) return capClean;
+    if (charging) return chargeClean;
+    return "غير محددة";
+  })(),
+  icon: "aps-icon-battery"
+},
         ].map(item => `
           <div class="col-12 col-md-6">
             <div class="aps-feature-card">
