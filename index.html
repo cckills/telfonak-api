@@ -301,11 +301,19 @@ document.addEventListener("mouseover", (e) => {
   }, { once: true });
 });
 
+resultDiv.addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn");
+  if (!btn) return;
+  if (btn.dataset.url) {  // إذا كان يحتوي على data-url
+    getDetails(btn.dataset.url);
+  }
+});
 
   </script>
 
 </body>
 </html>
+
 
 
 
