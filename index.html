@@ -168,36 +168,34 @@ async function getDetails(url) {
       return;
     }
 
-    // 🧩 تصنيف المواصفات حسب الأقسام
+    // 🧩 تصنيف المواصفات حسب الأقسام بالترتيب الذي تريده
     const sections = {
-      "نظرة عامة": ["الإصدار", "الماركة", "الاسم", "النوع", "الوزن", "الخامة"],
-      "الشبكة": ["الشبكة", "الواي فاي", "بلوتوث", "GPS", "5G", "4G", "NFC"],
-      "الشاشة": ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث"],
-      "الكاميرا": ["الكاميرا", "الخلفية", "الأمامية", "الفيديو"],
-      "العتاد": ["المعالج", "GPU", "الرام", "الشرائح", "المعالج الرسومي"],
-      "الذاكرة": ["الذاكرة", "التخزين", "SD"],
+      "نظرة عامة": ["الاسم", "النوع", "الإصدار", "الماركة"],
+      "السعر": ["السعر", "Price"],
       "النظام": ["نظام التشغيل", "الواجهة", "الإصدار"],
-      "البطارية": ["البطارية", "الشحن", "السعة"],
+      "الشاشة": ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث", "الحماية"],
+      "الذاكرة": ["الذاكرة", "التخزين", "SD", "RAM", "الرام"],
       "الأبعاد": ["الأبعاد", "الوزن", "الخامة"],
-      "الصوت": ["الصوت", "سماعات", "جاك"],
+      "الكاميرا": ["الكاميرا", "الخلفية", "الأمامية", "الفيديو", "دقة التصوير"],
+      "البطارية": ["البطارية", "الشحن", "السعة"],
+      "الصوت": ["الصوت", "سماعات", "جاك", "ستيريو"],
       "أخرى": []
     };
 
     const icons = {
       "نظرة عامة": "📋",
-      "الشبكة": "🌐",
-      "الشاشة": "📱",
-      "الكاميرا": "📸",
-      "العتاد": "🧠",
-      "البطارية": "🔋",
+      "السعر": "💰",
       "النظام": "⚙️",
+      "الشاشة": "📱",
       "الذاكرة": "💾",
       "الأبعاد": "📏",
+      "الكاميرا": "📸",
+      "البطارية": "🔋",
       "الصوت": "🔈",
       "أخرى": "📎"
     };
 
-    // 📦 تصنيف البيانات في مجموعات
+    // 📦 تصنيف المواصفات في مجموعات
     const grouped = {};
     for (const [key, val] of Object.entries(data.specs)) {
       let found = false;
@@ -211,21 +209,23 @@ async function getDetails(url) {
       if (!found) (grouped["أخرى"] ??= []).push({ key, val });
     }
 
-    const tabs = Object.keys(grouped).filter(k => grouped[k]?.length > 0);
+    const tabs = Object.keys(sections).filter(k => grouped[k]?.length > 0);
     if (tabs.length === 0) {
       modalBody.innerHTML = `<div class='alert alert-warning text-center'>لا توجد مواصفات متاحة.</div>`;
       return;
     }
 
+    // 🧭 إنشاء أزرار التبويب بالترتيب المطلوب
     const navTabs = tabs.map((tab, i) => `
       <li class="nav-item" role="presentation">
-        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}" data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
+        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}"
+                data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
           ${icons[tab] || "📋"} ${tab}
         </button>
       </li>
     `).join("");
 
-    // 🧾 نظرة عامة + صورة الهاتف
+    // 🎨 محتوى تبويب "نظرة عامة"
     const overviewContent = `
       <div class="text-center mb-4">
         ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
@@ -237,7 +237,7 @@ async function getDetails(url) {
           <div class="card shadow-sm border-0 p-3">
             <div class="fs-3 mb-1">📱</div>
             <div><strong>الشاشة</strong></div>
-            <small>${data.specs["الشاشة"] || "غير معروف"}</small>
+            <small>${data.specs["الشاشة"] || "غير محددة"}</small>
           </div>
         </div>
         <div class="col-md-3 col-6 mb-3">
@@ -274,14 +274,14 @@ async function getDetails(url) {
       </div>
     `;
 
-    // باقي التبويبات
+    // باقي التبويبات بنفس الترتيب
     const tabContents = tabs.map((tab, i) => {
       if (tab === "نظرة عامة") {
         return `<div class="tab-pane fade show active" id="content-${i}" role="tabpanel">${overviewContent}</div>`;
       }
       return `
         <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
-          <ul class="list-group list-group-flush">
+          <ul class="list-group list-group-flush mt-3">
             ${grouped[tab].map(item => `
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <strong>${item.key}</strong>
@@ -292,7 +292,7 @@ async function getDetails(url) {
         </div>`;
     }).join("");
 
-    // 💎 عرض المودال الكامل
+    // 💎 عرض المودال النهائي
     modalBody.innerHTML = `
       <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">
         ${navTabs}
@@ -315,6 +315,12 @@ async function getDetails(url) {
   }
 }
 </script>
+
+
+
+
+
+
 
   <!-- 🧠 سكربت جافاسكريبت -->
 
