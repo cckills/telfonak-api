@@ -212,17 +212,25 @@ async function getDetails(url) {
     }
 
     // 🧱 إنشاء التبويبات
+    // ✅ نأخذ الترتيب كما في كائن sections فقط، دون تكرار
+    const tabs = Object.keys(sections).filter(section => grouped[section] && grouped[section].length > 0);
+
+    // 🧱 إنشاء تبويبات بالترتيب الصحيح
     const navTabs = tabs.map((tab, i) => `
       <li class="nav-item" role="presentation">
-        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}" data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
-          ${icons[tab] || "📋"} ${tab}
+        <button 
+          class="nav-link ${i === 0 ? "active" : ""}" 
+          id="tab-${i}" 
+          data-bs-toggle="tab" 
+          data-bs-target="#content-${i}" 
+          type="button" role="tab">
+          ${icons[tab]} ${tab}
         </button>
       </li>
     `).join("");
 
-    // 🧾 إنشاء محتوى كل تبويب
+    // 🧾 إنشاء محتوى كل تبويب بنفس الترتيب
     const tabContents = tabs.map((tab, i) => {
-      // 👁️ تبويب نظرة عامة
       if (tab === "نظرة عامة") {
         return `
           <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
@@ -241,7 +249,6 @@ async function getDetails(url) {
           </div>`;
       }
 
-      // 💰 تبويب السعر بتصميم خاص
       if (tab === "السعر") {
         const priceVal = grouped[tab][0]?.val || "غير محدد";
         return `
@@ -254,7 +261,6 @@ async function getDetails(url) {
           </div>`;
       }
 
-      // باقي التبويبات العادية
       return `
         <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
           <ul class="list-group list-group-flush">
