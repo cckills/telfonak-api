@@ -82,54 +82,6 @@
 }
 
 
-.tab-content {
-  background-color: #fff;
-}
-
-
-
-
-
-/* 📱 تحسين التبويبات للموبايل */
-.nav-tabs {
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap;
-  flex-wrap: nowrap !important;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: #0d6efd transparent;
-}
-
-.nav-tabs::-webkit-scrollbar {
-  height: 6px;
-}
-
-.nav-tabs::-webkit-scrollbar-thumb {
-  background: #0d6efd;
-  border-radius: 3px;
-}
-
-.nav-tabs::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.nav-tabs .nav-item {
-  flex: 0 0 auto;
-}
-
-.nav-tabs .nav-link {
-  font-weight: 600;
-  color: #0d6efd;
-  border-radius: 10px 10px 0 0;
-  padding: 8px 14px;
-}
-
-.nav-tabs .nav-link.active {
-  background-color: #0d6efd;
-  color: #fff;
-}
-
 
   </style>
 </head>
@@ -162,41 +114,23 @@
   </div>
 
   <!-- 🟢 Bootstrap Modal لعرض المواصفات -->
-<!-- 🟢 Modal منسق لعرض المواصفات -->
+<!-- مودال عرض المواصفات -->
 <div class="modal fade" id="specsModal" tabindex="-1" aria-labelledby="specsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content shadow-lg rounded-4">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="specsModalLabel">تفاصيل الهاتف</h5>
+        <h5 class="modal-title" id="modalTitle">تفاصيل الهاتف</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
       </div>
-      <div class="modal-body">
-        <!-- ✅ التبويبات -->
-        <ul class="nav nav-tabs" id="specTabs" role="tablist">
-          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">نظرة عامة</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-network" type="button">الشبكة</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-display" type="button">الشاشة</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-camera" type="button">الكاميرا</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-hardware" type="button">العتاد</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-battery" type="button">البطارية</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-other" type="button">أخرى</button></li>
-        </ul>
-
-        <!-- ✅ محتوى كل تبويب -->
-        <div class="tab-content mt-3" id="modalTabsContent">
-          <div class="tab-pane fade show active" id="tab-overview"></div>
-          <div class="tab-pane fade" id="tab-network"></div>
-          <div class="tab-pane fade" id="tab-display"></div>
-          <div class="tab-pane fade" id="tab-camera"></div>
-          <div class="tab-pane fade" id="tab-hardware"></div>
-          <div class="tab-pane fade" id="tab-battery"></div>
-          <div class="tab-pane fade" id="tab-other"></div>
+      <div class="modal-body" id="specsModalBody">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-3 text-muted">جاري التحميل...</p>
         </div>
       </div>
     </div>
   </div>
 </div>
-
 
   <!-- 🧠 سكربت جافاسكريبت -->
 
@@ -276,64 +210,164 @@
     });
 
     // 🟢 عرض التفاصيل داخل نفس الصفحة
-  
-async function getDetails(url) {
-  const modalBody = document.querySelector("#specsModal .modal-body");
-  const tabs = {
-    overview: document.getElementById("tab-overview"),
-    network: document.getElementById("tab-network"),
-    display: document.getElementById("tab-display"),
-    camera: document.getElementById("tab-camera"),
-    hardware: document.getElementById("tab-hardware"),
-    battery: document.getElementById("tab-battery"),
-    other: document.getElementById("tab-other"),
-  };
 
-  // تفريغ المحتوى
-  Object.values(tabs).forEach(tab => (tab.innerHTML = ""));
-  tabs.overview.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
+async function getDetails(url) {
+  const modalBody = document.getElementById("specsModalBody");
+  modalBody.innerHTML = `<div class='alert alert-info text-center'>📱 جاري جلب المواصفات...</div>`;
 
   try {
     const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
     const data = await res.json();
 
     if (data.error) {
-      tabs.overview.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
+      modalBody.innerHTML = `<div class='alert alert-danger text-center'>❌ ${data.error}</div>`;
       return;
     }
 
-    document.getElementById("specsModalLabel").textContent = data.title;
+    // 🧩 تصنيف المواصفات حسب الأقسام
+    const sections = {
+      "نظرة عامة": ["الإصدار", "الماركة", "الاسم", "النوع", "الوزن", "الخامة"],
+      "الشبكة": ["الشبكة", "الواي فاي", "بلوتوث", "GPS", "5G", "4G", "NFC"],
+      "الشاشة": ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث"],
+      "الكاميرا": ["الكاميرا", "الخلفية", "الأمامية", "الفيديو"],
+      "العتاد": ["المعالج", "GPU", "الرام", "الشرائح", "المعالج الرسومي"],
+      "الذاكرة": ["الذاكرة", "التخزين", "SD"],
+      "النظام": ["نظام التشغيل", "الواجهة", "الإصدار"],
+      "البطارية": ["البطارية", "الشحن", "السعة"],
+      "الأبعاد": ["الأبعاد", "الوزن", "الخامة"],
+      "الصوت": ["الصوت", "سماعات", "جاك"],
+      "أخرى": []
+    };
 
-    // تصنيف المواصفات حسب الكلمات المفتاحية
+    const icons = {
+      "نظرة عامة": "📋",
+      "الشبكة": "🌐",
+      "الشاشة": "📱",
+      "الكاميرا": "📸",
+      "العتاد": "🧠",
+      "البطارية": "🔋",
+      "النظام": "⚙️",
+      "الذاكرة": "💾",
+      "الأبعاد": "📏",
+      "الصوت": "🔈",
+      "أخرى": "📎"
+    };
+
+    // 📦 تصنيف البيانات في مجموعات
+    const grouped = {};
     for (const [key, val] of Object.entries(data.specs)) {
-      const lower = key.toLowerCase();
-      const line = `<p><strong>${key}:</strong> ${val}</p>`;
-
-      if (lower.includes("شبكة")) tabs.network.innerHTML += line;
-      else if (lower.includes("شاشة")) tabs.display.innerHTML += line;
-      else if (lower.includes("كاميرا")) tabs.camera.innerHTML += line;
-      else if (lower.includes("بطارية")) tabs.battery.innerHTML += line;
-      else if (lower.includes("معالج") || lower.includes("رام") || lower.includes("تخزين") || lower.includes("نظام"))
-        tabs.hardware.innerHTML += line;
-      else tabs.other.innerHTML += line;
+      let found = false;
+      for (const [section, keywords] of Object.entries(sections)) {
+        if (keywords.some(k => key.includes(k))) {
+          (grouped[section] ??= []).push({ key, val });
+          found = true;
+          break;
+        }
+      }
+      if (!found) (grouped["أخرى"] ??= []).push({ key, val });
     }
 
-    // النظرة العامة
-    tabs.overview.innerHTML = `
-      ${data.img ? `<img src="${data.img}" class="img-fluid rounded mb-3">` : ""}
-      <h5>${data.title}</h5>
-      <p><a href="${data.source}" target="_blank" class="btn btn-outline-primary btn-sm mt-2">عرض على موقع المصدر</a></p>
+    // 🧱 بناء التبويبات
+    const tabs = Object.keys(grouped).filter(k => grouped[k]?.length > 0);
+    if (tabs.length === 0) {
+      modalBody.innerHTML = `<div class='alert alert-warning text-center'>لا توجد مواصفات متاحة.</div>`;
+      return;
+    }
+
+    const navTabs = tabs.map((tab, i) => `
+      <li class="nav-item" role="presentation">
+        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}" data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
+          ${icons[tab] || "📋"} ${tab}
+        </button>
+      </li>
+    `).join("");
+
+    // 🧾 إنشاء تبويب "نظرة عامة" احترافي
+    const overviewCards = `
+      <div class="row text-center mb-4">
+        <div class="col-md-3 col-6 mb-3">
+          <div class="card shadow-sm border-0 p-3">
+            <div class="fs-3 mb-1">📱</div>
+            <div><strong>الشاشة</strong></div>
+            <small>${data.specs["الشاشة"] || "غير معروف"}</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+          <div class="card shadow-sm border-0 p-3">
+            <div class="fs-3 mb-1">🧠</div>
+            <div><strong>المعالج</strong></div>
+            <small>${data.specs["المعالج"] || "غير محدد"}</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+          <div class="card shadow-sm border-0 p-3">
+            <div class="fs-3 mb-1">📸</div>
+            <div><strong>الكاميرا</strong></div>
+            <small>${data.specs["الكاميرا"] || "غير محددة"}</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+          <div class="card shadow-sm border-0 p-3">
+            <div class="fs-3 mb-1">🔋</div>
+            <div><strong>البطارية</strong></div>
+            <small>${data.specs["البطارية"] || "غير محددة"}</small>
+          </div>
+        </div>
+      </div>`;
+
+    const tabContents = tabs.map((tab, i) => {
+      if (tab === "نظرة عامة") {
+        return `
+          <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
+            <div class="text-center mb-4">
+              ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:cover;">` : ""}
+              <h4 class="fw-bold">${data.title}</h4>
+            </div>
+            ${overviewCards}
+            <div class="row g-3">
+              ${grouped[tab].map(item => `
+                <div class="col-md-6">
+                  <div class="p-2 border rounded bg-white shadow-sm">
+                    <strong>${item.key}:</strong> ${item.val}
+                  </div>
+                </div>`).join("")}
+            </div>
+          </div>`;
+      }
+
+      return `
+        <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
+          <ul class="list-group list-group-flush">
+            ${grouped[tab].map(item => `
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>${item.key}</strong>
+                <span>${item.val}</span>
+              </li>`).join("")}
+          </ul>
+        </div>`;
+    }).join("");
+
+    // 🎨 واجهة المودال النهائية
+    modalBody.innerHTML = `
+      <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">
+        ${navTabs}
+      </ul>
+      <div class="tab-content p-3 border border-top-0 rounded-bottom bg-light mt-1" id="specTabsContent">
+        ${tabContents}
+      </div>
+      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-3 w-100 fw-bold">
+        🌐 عرض على موقع المصدر
+      </a>
     `;
 
-    // إظهار المودال
-    const modal = new bootstrap.Modal(document.getElementById("specsModal"));
-    modal.show();
+    // عرض المودال
+    new bootstrap.Modal(document.getElementById('specsModal')).show();
+
   } catch (err) {
-    tabs.overview.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+    console.error(err);
+    modalBody.innerHTML = `<div class='alert alert-danger text-center'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
   }
 }
-
-
 // 🧠 تفعيل التلميحات على الماوس والموبايل
 document.addEventListener("click", (e) => {
   const badge = e.target.closest(".chipset-badge");
