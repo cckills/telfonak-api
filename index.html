@@ -310,11 +310,15 @@ if (tab === "نظرة عامة") {
   return `
     <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
       <div class="text-center mb-4">
-        ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
+        ${data.img ? `
+          <div class="mb-3">
+            <img src="${data.img}" class="img-fluid rounded shadow-sm" style="max-height:250px;object-fit:contain;">
+          </div>
+        ` : ""}
         <h4 class="fw-bold">${data.title}</h4>
       </div>
 
-      <div class="row g-3">
+      <div class="row g-3 justify-content-center">
         ${[
           { key: "الشاشة", val: data.specs["الشاشة"] || "غير محددة", icon: "aps-icon-mobile" },
           { key: "المعالج", val: data.specs["المعالج"] || "غير محدد", icon: "aps-icon-cpu" },
@@ -323,20 +327,21 @@ if (tab === "نظرة عامة") {
           { key: "نظام التشغيل", val: data.specs["نظام التشغيل"] || "غير محدد", icon: "aps-icon-code" },
           { key: "البطارية", val: data.specs["البطارية"] || "غير محددة", icon: "aps-icon-battery" }
         ].map(item => `
-         <div class="col-md-6 col-lg-4">
-    <div class="aps-feature-card">
-      <div class="aps-list-icon ${item.icon}"></div>
-      <div class="aps-feature-info text-center mt-2">
-        <strong>${item.key}</strong><br>
-        <span>${item.val}</span>
-      </div>
-    </div>
-  </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="aps-feature-card">
+              <div class="aps-list-icon ${item.icon}"></div>
+              <div class="aps-feature-info text-center mt-2">
+                <strong>${item.key}</strong><br>
+                <span>${item.val}</span>
+              </div>
+            </div>
+          </div>
         `).join("")}
       </div>
     </div>
   `;
 }
+
 
       // 🟢 السعر
       if (tab === "السعر") {
