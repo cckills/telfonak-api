@@ -5,75 +5,6 @@
   <title>بحث عن الهواتف</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    /* 🟦 قائمة المواصفات الأساسية */
-/* 🟦 قائمة المواصفات الأساسية والبطاقات */
-.aps-features-list {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.aps-features-list li {
-  margin-bottom: 15px;
-}
-
-.aps-feature-anim {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: #f0f8ff; /* خلفية فاتحة للبطاقة */
-  padding: 15px 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.aps-feature-anim:hover {
-  transform: translateY(-3px); /* تأثير التحويم */
-  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-}
-
-.aps-list-icon {
-  flex-shrink: 0;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #fff;
-}
-
-/* 🟢 ألوان وأيقونات مختلفة لكل ميزة */
-.aps-icon-mobile { background-color: #0d6efd; } /* أزرق */ 
-.aps-icon-mobile::before { content: "📱"; }
-
-.aps-icon-cpu { background-color: #198754; } /* أخضر */ 
-.aps-icon-cpu::before { content: "🧠"; }
-
-.aps-icon-camera { background-color: #fd7e14; } /* برتقالي */ 
-.aps-icon-camera::before { content: "📸"; }
-
-.aps-icon-hdd { background-color: #6f42c1; } /* بنفسجي */ 
-.aps-icon-hdd::before { content: "💾"; }
-
-.aps-icon-code { background-color: #20c997; } /* أخضر فاتح */ 
-.aps-icon-code::before { content: "⚙️"; }
-
-.aps-icon-battery { background-color: #ffc107; color: #000; } /* أصفر */ 
-.aps-icon-battery::before { content: "🔋"; }
-
-.aps-feature-info {
-  flex: 1;
-  font-size: 15px;
-  line-height: 1.4;
-}
-
-.aps-feature-info strong {
-  color: #000; /* نص البارز داخل البطاقة */
-}
-
     /* 🎨 التنسيقات */
     body { background: #f9f9f9; font-family: 'Cairo', sans-serif; }
     .search-modal-box {
@@ -295,66 +226,59 @@ async function getDetails(url) {
 
     const tabContents = tabs.map((tab, i) => {
       // 🟢 نظرة عامة
-     if (tab === "نظرة عامة") {
-  return `
-  <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
-    <div class="text-center mb-4">
-      ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
-      <h4 class="fw-bold">${data.title}</h4>
-    </div>
+      if (tab === "نظرة عامة") {
+        return `
+        <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
+          <div class="text-center mb-4">
+            ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
+            <h4 class="fw-bold">${data.title || "هاتف غير معروف"}</h4>
+          </div>
 
-    <ul class="aps-features-list list-unstyled">
-      <li>
-        <div class="aps-feature-anim">
-          <span class="aps-list-icon aps-icon-mobile"></span>
-          <div class="aps-feature-info">
-            <strong>الشاشة</strong>: <span>${data.specs["الشاشة"] || "غير محددة"}</span>
+          <div class="row text-center mb-4">
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">📱</div>
+                <div><strong>الشاشة</strong></div>
+                <small>${data.specs["الشاشة"] || "غير معروف"}</small>
+              </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">🧠</div>
+                <div><strong>المعالج</strong></div>
+                <small>${data.specs["المعالج"] || "غير محدد"}</small>
+              </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">📸</div>
+                <div><strong>الكاميرا</strong></div>
+                <small>${data.specs["الكاميرا"] || "غير محددة"}</small>
+              </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">🔋</div>
+                <div><strong>البطارية</strong></div>
+                <small>${data.specs["البطارية"] || "غير محددة"}</small>
+              </div>
+            </div>
           </div>
-        </div>
-      </li>
-      <li>
-        <div class="aps-feature-anim">
-          <span class="aps-list-icon aps-icon-cpu"></span>
-          <div class="aps-feature-info">
-            <strong>المعالج</strong>: <span>${data.specs["المعالج"] || "غير محدد"}</span>
+
+          <div class="row g-3">
+            ${grouped["نظرة عامة"]?.length 
+              ? grouped["نظرة عامة"].map(item => `
+                  <div class="col-md-6">
+                    <div class="p-2 border rounded bg-white shadow-sm">
+                      <strong>${item.key}:</strong> ${item.val}
+                    </div>
+                  </div>
+                `).join("")
+              : "<p class='text-muted text-center'>❌ لا توجد بيانات إضافية.</p>"
+            }
           </div>
-        </div>
-      </li>
-      <li>
-        <div class="aps-feature-anim">
-          <span class="aps-list-icon aps-icon-camera"></span>
-          <div class="aps-feature-info">
-            <strong>الكاميرات</strong>: <span>${data.specs["الكاميرا"] || data.specs["الكاميرات"] || "غير محددة"}</span>
-          </div>
-        </div>
-      </li>
-      <li>
-        <div class="aps-feature-anim">
-          <span class="aps-list-icon aps-icon-hdd"></span>
-          <div class="aps-feature-info">
-            <strong>الذاكرة + الرام</strong>: <span>${data.specs["الذاكرة"] || "غير محددة"} / ${data.specs["الرام"] || "غير محددة"}</span>
-          </div>
-        </div>
-      </li>
-      <li>
-        <div class="aps-feature-anim">
-          <span class="aps-list-icon aps-icon-code"></span>
-          <div class="aps-feature-info">
-            <strong>نظام التشغيل</strong>: <span>${data.specs["نظام التشغيل"] || "غير محدد"}</span>
-          </div>
-        </div>
-      </li>
-      <li>
-        <div class="aps-feature-anim">
-          <span class="aps-list-icon aps-icon-battery"></span>
-          <div class="aps-feature-info">
-            <strong>البطارية</strong>: <span>${data.specs["البطارية"] || "غير محددة"}</span>
-          </div>
-        </div>
-      </li>
-    </ul>
-  </div>`;
-}
+        </div>`;
+      }
 
       // 🟢 السعر
       if (tab === "السعر") {
@@ -559,7 +483,5 @@ resultDiv.addEventListener("click", (e) => {
 
 </body>
 </html>
-
-
 
 
