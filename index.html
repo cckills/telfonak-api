@@ -302,14 +302,14 @@ document.addEventListener("mouseover", (e) => {
 });
 
 resultDiv.addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn");
+  const btn = e.target.closest("button[data-url]"); // فقط الأزرار التي لها data-url
   if (!btn) return;
-  if (btn.dataset.url) {  // إذا كان يحتوي على data-url
-    getDetails(btn.dataset.url);
-  }
+  getDetails(btn.dataset.url);
 });
+
 
   </script>
 
 </body>
 </html>
+
