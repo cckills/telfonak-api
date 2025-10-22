@@ -241,7 +241,18 @@ async function getDetails(url, phoneImg) {
   icon:"aps-icon-camera" 
 },
 
-          { key:"الذاكرة + الرام", val:data.specs["الذاكرة"]?`${data.specs["الذاكرة"]} / ${data.specs["الرام"]||"غير محددة"}`:"غير محددة", icon:"aps-icon-hdd" },
+{
+  key: "الذاكرة + الرام",
+  val: (() => {
+    const storage = data.specs["الذاكرة"] || data.specs["التخزين"] || "";
+    const ram = data.specs["الرام"] || "";
+    if (storage && ram) return `${storage} + ${ram}`;
+    else if (storage) return storage;
+    else if (ram) return ram;
+    else return "غير محددة";
+  })(),
+  icon: "aps-icon-hdd"
+},
           { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
           { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
         ].map(item => `
@@ -390,5 +401,6 @@ resultDiv.addEventListener("click",(e)=>{
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 
