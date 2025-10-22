@@ -153,14 +153,28 @@ async function getDetails(url, phoneImg) {
   const featuresList = [
     { key:"الشاشة", val:data.specs["الشاشة"]||"غير محددة", icon:"aps-icon-mobile" },
     { key:"المعالج", val:data.specs["المعالج"]||"غير محدد", icon:"aps-icon-cpu" },
-    { key:"الكاميرات", 
-      val: (() => {
-        const back = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "غير محددة";
-        const front = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "غير محددة";
-        return `خلفية ${back} / أمامية ${front}`;
-      })(), 
-      icon:"aps-icon-camera" 
-    },
+
+   { 
+  key:"الكاميرات", 
+  val: (() => {
+    // جلب الكاميرات الخلفية والأمامية
+    const back = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "غير محددة";
+    const front = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "غير محددة";
+
+    // صياغة النص حسب الموقع
+    if(back !== "غير محددة" && front !== "غير محددة") {
+      return `خلفية • ${back} / أمامية • ${front}`;
+    } else if(back !== "غير محددة") {
+      return `خلفية • ${back}`;
+    } else if(front !== "غير محددة") {
+      return `أمامية • ${front}`;
+    } else {
+      return "غير محددة";
+    }
+  })(), 
+  icon:"aps-icon-camera" 
+},
+
     { key:"الذاكرة + الرام", val:data.specs["الذاكرة"]?`${data.specs["الذاكرة"]} / ${data.specs["الرام"]||"غير محددة"}`:"غير محددة", icon:"aps-icon-hdd" },
     { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
     { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
