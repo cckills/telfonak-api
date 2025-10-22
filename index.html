@@ -168,17 +168,17 @@ async function getDetails(url) {
       return;
     }
 
-    // 🧩 تصنيف المواصفات حسب الأقسام بالترتيب الذي تريده
+    // 🧩 الأقسام بالترتيب المطلوب فقط
     const sections = {
-      "نظرة عامة": ["الاسم", "النوع", "الإصدار", "الماركة"],
-      "السعر": ["السعر", "Price"],
+      "نظرة عامة": ["الإصدار", "الماركة", "الاسم", "النوع", "الخامة"],
+      "السعر": ["السعر", "Price", "الأسعار"],
       "النظام": ["نظام التشغيل", "الواجهة", "الإصدار"],
-      "الشاشة": ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث", "الحماية"],
-      "الذاكرة": ["الذاكرة", "التخزين", "SD", "RAM", "الرام"],
-      "الأبعاد": ["الأبعاد", "الوزن", "الخامة"],
-      "الكاميرا": ["الكاميرا", "الخلفية", "الأمامية", "الفيديو", "دقة التصوير"],
+      "الشاشة": ["الشاشة", "النوع", "الدقة", "السطوع", "معدل التحديث"],
+      "الذاكرة": ["الذاكرة", "التخزين", "SD", "الرام"],
+      "الأبعاد": ["الأبعاد", "الوزن", "الحجم"],
+      "الكاميرا": ["الكاميرا", "الخلفية", "الأمامية", "الفيديو"],
       "البطارية": ["البطارية", "الشحن", "السعة"],
-      "الصوت": ["الصوت", "سماعات", "جاك", "ستيريو"],
+      "الصوت": ["الصوت", "سماعات", "جاك"],
       "أخرى": []
     };
 
@@ -195,7 +195,7 @@ async function getDetails(url) {
       "أخرى": "📎"
     };
 
-    // 📦 تصنيف المواصفات في مجموعات
+    // 📦 تصنيف المواصفات
     const grouped = {};
     for (const [key, val] of Object.entries(data.specs)) {
       let found = false;
@@ -209,79 +209,84 @@ async function getDetails(url) {
       if (!found) (grouped["أخرى"] ??= []).push({ key, val });
     }
 
-    const tabs = Object.keys(sections).filter(k => grouped[k]?.length > 0);
-    if (tabs.length === 0) {
-      modalBody.innerHTML = `<div class='alert alert-warning text-center'>لا توجد مواصفات متاحة.</div>`;
-      return;
-    }
+    // ✅ الحفاظ على الترتيب الثابت
+    const tabs = Object.keys(sections).filter(sec => grouped[sec]?.length > 0);
 
-    // 🧭 إنشاء أزرار التبويب بالترتيب المطلوب
     const navTabs = tabs.map((tab, i) => `
       <li class="nav-item" role="presentation">
-        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}"
-                data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
-          ${icons[tab] || "📋"} ${tab}
+        <button class="nav-link ${i === 0 ? "active" : ""}" id="tab-${i}" data-bs-toggle="tab" data-bs-target="#content-${i}" type="button" role="tab">
+          ${icons[tab]} ${tab}
         </button>
       </li>
     `).join("");
 
-    // 🎨 محتوى تبويب "نظرة عامة"
-    const overviewContent = `
-      <div class="text-center mb-4">
-        ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
-        <h4 class="fw-bold">${data.title}</h4>
-      </div>
-
-      <div class="row text-center mb-4">
-        <div class="col-md-3 col-6 mb-3">
-          <div class="card shadow-sm border-0 p-3">
-            <div class="fs-3 mb-1">📱</div>
-            <div><strong>الشاشة</strong></div>
-            <small>${data.specs["الشاشة"] || "غير محددة"}</small>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="card shadow-sm border-0 p-3">
-            <div class="fs-3 mb-1">🧠</div>
-            <div><strong>المعالج</strong></div>
-            <small>${data.specs["المعالج"] || "غير محدد"}</small>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="card shadow-sm border-0 p-3">
-            <div class="fs-3 mb-1">📸</div>
-            <div><strong>الكاميرا</strong></div>
-            <small>${data.specs["الكاميرا"] || "غير محددة"}</small>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="card shadow-sm border-0 p-3">
-            <div class="fs-3 mb-1">🔋</div>
-            <div><strong>البطارية</strong></div>
-            <small>${data.specs["البطارية"] || "غير محددة"}</small>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-3">
-        ${grouped["نظرة عامة"]?.map(item => `
-          <div class="col-md-6">
-            <div class="p-2 border rounded bg-white shadow-sm">
-              <strong>${item.key}:</strong> ${item.val}
-            </div>
-          </div>
-        `).join("") || "<p class='text-muted'>لا توجد تفاصيل إضافية.</p>"}
-      </div>
-    `;
-
-    // باقي التبويبات بنفس الترتيب
+    // 🧾 محتوى التبويبات
     const tabContents = tabs.map((tab, i) => {
       if (tab === "نظرة عامة") {
-        return `<div class="tab-pane fade show active" id="content-${i}" role="tabpanel">${overviewContent}</div>`;
+        return `
+        <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
+          <div class="text-center mb-4">
+            ${data.img ? `<img src="${data.img}" class="img-fluid rounded shadow-sm mb-3" style="max-height:250px;object-fit:contain;">` : ""}
+            <h4 class="fw-bold">${data.title}</h4>
+          </div>
+
+          <div class="row text-center mb-4">
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">📱</div>
+                <div><strong>الشاشة</strong></div>
+                <small>${data.specs["الشاشة"] || "غير معروف"}</small>
+              </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">🧠</div>
+                <div><strong>المعالج</strong></div>
+                <small>${data.specs["المعالج"] || "غير محدد"}</small>
+              </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">📸</div>
+                <div><strong>الكاميرا</strong></div>
+                <small>${data.specs["الكاميرا"] || "غير محددة"}</small>
+              </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+              <div class="card shadow-sm border-0 p-3">
+                <div class="fs-3 mb-1">🔋</div>
+                <div><strong>البطارية</strong></div>
+                <small>${data.specs["البطارية"] || "غير محددة"}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            ${grouped["نظرة عامة"]?.map(item => `
+              <div class="col-md-6">
+                <div class="p-2 border rounded bg-white shadow-sm">
+                  <strong>${item.key}:</strong> ${item.val}
+                </div>
+              </div>
+            `).join("") || "<p class='text-muted'>لا توجد تفاصيل إضافية.</p>"}
+          </div>
+        </div>`;
       }
+
+      if (tab === "السعر") {
+        const priceVal = grouped["السعر"]?.[0]?.val || "غير متوفر";
+        return `
+        <div class="tab-pane fade" id="content-${i}" role="tabpanel">
+          <div class="card border-success text-center shadow-sm p-4 bg-light">
+            <h4 class="text-success fw-bold mb-3">💰 السعر</h4>
+            <p class="fs-4 text-success">${priceVal}</p>
+          </div>
+        </div>`;
+      }
+
       return `
-        <div class="tab-pane fade ${i === 0 ? "show active" : ""}" id="content-${i}" role="tabpanel">
-          <ul class="list-group list-group-flush mt-3">
+        <div class="tab-pane fade" id="content-${i}" role="tabpanel">
+          <ul class="list-group list-group-flush">
             ${grouped[tab].map(item => `
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <strong>${item.key}</strong>
@@ -292,7 +297,7 @@ async function getDetails(url) {
         </div>`;
     }).join("");
 
-    // 💎 عرض المودال النهائي
+    // 💎 عرض المودال الكامل
     modalBody.innerHTML = `
       <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">
         ${navTabs}
@@ -315,10 +320,6 @@ async function getDetails(url) {
   }
 }
 </script>
-
-
-
-
 
 
 
