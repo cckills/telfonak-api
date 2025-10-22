@@ -150,10 +150,11 @@
   <strong>المعالج:</strong>
   <span 
     class="chipset-badge" 
-    data-tooltip="${item.chipsetTooltip || item.chipset || 'غير معروف'}">
+    data-tooltip="${item.chipsetTooltip || ''}">
     ${item.chipset || "غير محدد"}
   </span>
 </p>
+
 
 
                     <button class="btn btn-primary mt-auto" onclick="getDetails('${item.link}')">عرض المواصفات</button>
