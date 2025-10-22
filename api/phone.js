@@ -40,7 +40,6 @@ export default async function handler(req, res) {
           $(el).find("img").attr("src");
 
         if (link && title) {
-          let chipset = "غير محدد";
           try {
             // 🧠 جلب صفحة الهاتف لمعرفة المعالج
             const phonePage = await fetch(link, {
@@ -53,22 +52,35 @@ export default async function handler(req, res) {
             if (phonePage.ok) {
               const phoneHtml = await phonePage.text();
               const $$ = cheerio.load(phoneHtml);
-              chipset =
+
+              let fullChipset =
                 $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
                 $$("tr:contains('المعالج') span.aps-1co").text().trim() ||
-                "غير محدد";
+                "";
+
+              let shortChipset = fullChipset;
+              let chipsetTooltip = "";
+
+              if (fullChipset) {
+                // 🔍 استخراج الاسم الرئيسي (أول كلمتين أو 3)
+                const match = fullChipset.match(/([A-Za-z\u0600-\u06FF]+\s*\d*\s*\w*)/);
+                shortChipset = match ? match[0].trim() : fullChipset;
+                chipsetTooltip =
+                  fullChipset.length > shortChipset.length ? fullChipset : "";
+              }
+
+              results.push({
+                title,
+                link,
+                img,
+                chipset: shortChipset || "غير محدد",
+                chipsetTooltip,
+                source: "telfonak.com",
+              });
             }
           } catch (err) {
             console.error("⚠️ خطأ أثناء جلب صفحة الهاتف:", err.message);
           }
-
-          results.push({
-            title,
-            link,
-            img,
-            chipset,
-            source: "telfonak.com",
-          });
         }
       }
 
