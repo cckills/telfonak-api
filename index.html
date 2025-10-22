@@ -281,7 +281,6 @@ async function getDetails(url, phoneImg) {
     modalBody.innerHTML = `
       <ul class="nav nav-tabs justify-content-center flex-wrap" id="specTabs" role="tablist">${navTabs}</ul>
       <div class="tab-content p-3 border border-top-0 rounded-bottom bg-light mt-1" id="specTabsContent">${tabContents}</div>
-      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-3 w-100 fw-bold">🌐 عرض على موقع المصدر</a>
     `;
 
     new bootstrap.Modal(document.getElementById('specsModal')).show();
@@ -339,7 +338,6 @@ form.addEventListener("submit", async(e)=>{
         <div class="card-body">
           <h4>${data.title}</h4>
           <ul>${specsHtml}</ul>
-          <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
         </div>
       </div>`;
     }
@@ -392,4 +390,5 @@ resultDiv.addEventListener("click",(e)=>{
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
