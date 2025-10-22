@@ -111,6 +111,21 @@
     <div id="result"></div>
   </div>
 
+  <!-- 🟢 Bootstrap Modal لعرض المواصفات -->
+<div class="modal fade" id="specsModal" tabindex="-1" aria-labelledby="specsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="specsModalLabel">مواصفات الهاتف</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+      </div>
+      <div class="modal-body" id="specsModalBody">
+        <!-- سيتم ملء المحتوى هنا بواسطة جافاسكريبت -->
+      </div>
+    </div>
+  </div>
+</div>
+
   <!-- 🧠 سكربت جافاسكريبت -->
   <script>
     const form = document.getElementById("searchForm");
@@ -155,7 +170,6 @@
   </span>
 </p>
 
-
                     <button class="btn btn-primary mt-auto" onclick="getDetails('${item.link}')">عرض المواصفات</button>
                   </div>
                 </div>
@@ -190,15 +204,15 @@
 
     // 🟢 عرض التفاصيل داخل نفس الصفحة
 async function getDetails(url) {
-    document.querySelectorAll(".tooltip-popup").forEach(el => el.remove());
+  const modalBody = document.getElementById("specsModalBody");
+  modalBody.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
 
-  resultDiv.innerHTML = `<div class='alert alert-info'>📱 جاري جلب المواصفات...</div>`;
   try {
     const res = await fetch(`/api/details?url=${encodeURIComponent(url)}`);
     const data = await res.json();
 
     if (data.error) {
-      resultDiv.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
+      modalBody.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`;
       return;
     }
 
@@ -207,18 +221,19 @@ async function getDetails(url) {
       specsHtml += `<li><strong>${key}:</strong> ${val}</li>`;
     }
 
-    resultDiv.innerHTML = `
-      <div class="card shadow mt-4">
-        ${data.img ? `<img src="${data.img}" class="card-img-top" style="height:300px;object-fit:cover;">` : ""}
-        <div class="card-body">
-          <h4>${data.title}</h4>
-          <ul>${specsHtml}</ul>
-          <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
-        </div>
-      </div>
+    modalBody.innerHTML = `
+      ${data.img ? `<img src="${data.img}" class="img-fluid mb-3" style="object-fit:cover;">` : ""}
+      <h4>${data.title}</h4>
+      <ul>${specsHtml}</ul>
+      <a href="${data.source}" target="_blank" class="btn btn-outline-primary mt-2">عرض على موقع المصدر</a>
     `;
+
+    // إظهار الموديول
+    const specsModal = new bootstrap.Modal(document.getElementById('specsModal'));
+    specsModal.show();
+
   } catch (err) {
-    resultDiv.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
+    modalBody.innerHTML = `<div class='alert alert-danger'>⚠️ حدث خطأ أثناء جلب البيانات.</div>`;
   }
 }
 
