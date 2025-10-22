@@ -170,8 +170,35 @@ async function getDetails(url, phoneImg) {
     <div class="flex-grow-1 w-100">
       <div class="row g-3 justify-content-start">
         ${[
-          { key:"الشاشة", val:data.specs["الشاشة"]||"غير محددة", icon:"aps-icon-mobile" },
+{ 
+  key:"الشاشة", 
+  val:(() => {
+    const screenRaw = data.specs["الشاشة"] || "غير محددة";
+
+    // 🔍 استخراج نوع الشاشة (مثل IPS LCD أو OLED أو AMOLED)
+    const typeMatch = screenRaw.match(/(IPS|LCD|OLED|AMOLED|Super AMOLED|LTPO|PLS|TFT)/i);
+    const type = typeMatch ? typeMatch[0].toUpperCase() : "";
+
+    // 🔍 استخراج الحجم بالبوصة
+    const sizeMatch = screenRaw.match(/(\d+(\.\d+)?)\s*(بوصة|بوصه|inch|")/i);
+    const size = sizeMatch ? `${sizeMatch[1]} بوصة` : "";
+
+    // 🔍 استخراج الدقة (مثل FHD+ أو 1080x2400)
+    const resMatch = screenRaw.match(/(FHD\+?|HD\+?|QHD\+?|UHD\+?|4K|1080x\d+|720x\d+)/i);
+    const res = resMatch ? `بدقة ${resMatch[0].toUpperCase()}` : "";
+
+    if (type || size || res) {
+      return `${type ? type : ""}${type && size ? " بحجم " : ""}${size}${(type || size) && res ? " " : ""}${res}`.trim();
+    } else {
+      return screenRaw;
+    }
+  })(),
+  icon:"aps-icon-mobile" 
+},
+
+
           { key:"المعالج", val:data.specs["المعالج"]||"غير محدد", icon:"aps-icon-cpu" },
+          
  { key:"الكاميرات", 
   val:(() => {
     const backRaw = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "";
