@@ -309,15 +309,21 @@ async function getDetails(url) {
 if (tab === "نظرة عامة") {
   return `
     <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
+      
+      <!-- 📸 عرض الصورة -->
       <div class="text-center mb-4">
-        ${data.img ? `
-          <div class="mb-3">
-            <img src="${data.img}" class="img-fluid rounded shadow-sm" style="max-height:250px;object-fit:contain;">
-          </div>
-        ` : ""}
-        <h4 class="fw-bold">${data.title}</h4>
+        <div class="aps-main-image">
+          <img fetchpriority="high" class="aps-image-zoom rounded shadow-sm" 
+               itemprop="image" 
+               src="${data.img || 'https://telfonak.com/wp-content/uploads/2023/12/huawei-y9-prime-2019.webp'}" 
+               width="600" height="600" 
+               alt="${data.title}">
+          <div class="aps-img-loader"><span class="aps-loader"></span></div>
+        </div>
+        <h4 class="fw-bold mt-2">${data.title}</h4>
       </div>
 
+      <!-- 🟦 البطاقات -->
       <div class="row g-3 justify-content-center">
         ${[
           { key: "الشاشة", val: data.specs["الشاشة"] || "غير محددة", icon: "aps-icon-mobile" },
