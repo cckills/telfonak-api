@@ -224,12 +224,17 @@ async function getDetails(url) {
 }
 
 
-// 💻 عرض التلميح عند تمرير الماوس
-document.querySelectorAll(".chipset-badge").forEach(badge => {
-  const tooltipText = badge.getAttribute("data-tooltip");
-  if (!tooltipText) return;
+  // 💻 تلميحات المعالج على الماوس
+  document.addEventListener("mouseover", (e) => {
+    const badge = e.target.closest(".chipset-badge");
+    if (!badge) return;
 
-  badge.addEventListener("mouseenter", () => {
+    const tooltipText = badge.getAttribute("data-tooltip");
+    if (!tooltipText) return;
+
+    // منع تكرار التلميح
+    if (badge._tooltip) return;
+
     const tooltip = document.createElement("div");
     tooltip.className = "tooltip-popup";
     tooltip.textContent = tooltipText;
@@ -239,16 +244,15 @@ document.querySelectorAll(".chipset-badge").forEach(badge => {
     tooltip.style.top = `${rect.bottom + window.scrollY + 10}px`;
     tooltip.style.left = `${rect.left + window.scrollX}px`;
 
-    badge._tooltip = tooltip; // تخزين التلميح مؤقتًا
-  });
+    badge._tooltip = tooltip;
 
-  badge.addEventListener("mouseleave", () => {
-    if (badge._tooltip) {
-      badge._tooltip.remove();
-      badge._tooltip = null;
-    }
+    badge.addEventListener("mouseleave", () => {
+      if (badge._tooltip) {
+        badge._tooltip.remove();
+        badge._tooltip = null;
+      }
+    }, { once: true });
   });
-});
 
 
 
@@ -256,5 +260,6 @@ document.querySelectorAll(".chipset-badge").forEach(badge => {
 
 </body>
 </html>
+
 
 
