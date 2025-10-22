@@ -146,38 +146,46 @@ async function getDetails(url, phoneImg) {
       </li>`).join("");
 
     const tabContents = tabs.map((tab,i)=>{
-      if(tab==="نظرة عامة"){
-        const mainImage = phoneImg || data.img || 'https://telfonak.com/wp-content/uploads/2023/12/huawei-y9-prime-2019.webp';
-        return `
-        <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
-          <div class="text-center mb-4">
-            <div class="aps-main-image">
-              <img fetchpriority="high" class="aps-image-zoom rounded shadow-sm" src="${mainImage}" width="600" height="600" alt="${data.title}">
-              <div class="aps-img-loader"><span class="aps-loader"></span></div>
-            </div>
-            <h4 class="fw-bold mt-2">${data.title}</h4>
-          </div>
-          <div class="row g-3 justify-content-center">
-            ${[
-              { key:"الشاشة", val:data.specs["الشاشة"]||"غير محددة", icon:"aps-icon-mobile" },
-              { key:"المعالج", val:data.specs["المعالج"]||"غير محدد", icon:"aps-icon-cpu" },
-              { key:"الكاميرات", val:data.specs["الكاميرا"]||"غير محددة", icon:"aps-icon-camera" },
-              { key:"الذاكرة + الرام", val:data.specs["الذاكرة"]?`${data.specs["الذاكرة"]} / ${data.specs["الرام"]||"غير محددة"}`:"غير محددة", icon:"aps-icon-hdd" },
-              { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
-              { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
-            ].map(item=>`
-              <div class="col-md-6 col-lg-4">
-                <div class="aps-feature-card">
-                  <div class="aps-list-icon ${item.icon}"></div>
-                  <div class="aps-feature-info text-center mt-2">
-                    <strong>${item.key}</strong><br>
-                    <span>${item.val}</span>
-                  </div>
+    if(tab==="نظرة عامة"){
+  const mainImage = phoneImg || data.img || 'https://telfonak.com/wp-content/uploads/2023/12/huawei-y9-prime-2019.webp';
+  return `
+  <div class="tab-pane fade show active" id="content-${i}" role="tabpanel">
+    <div class="row g-3 align-items-start">
+      <!-- 🟢 البطاقات على اليسار -->
+      <div class="col-lg-6">
+        <div class="row g-3 justify-content-start">
+          ${[
+            { key:"الشاشة", val:data.specs["الشاشة"]||"غير محددة", icon:"aps-icon-mobile" },
+            { key:"المعالج", val:data.specs["المعالج"]||"غير محدد", icon:"aps-icon-cpu" },
+            { key:"الكاميرات", val:data.specs["الكاميرا"]||"غير محددة", icon:"aps-icon-camera" },
+            { key:"الذاكرة + الرام", val:data.specs["الذاكرة"]?`${data.specs["الذاكرة"]} / ${data.specs["الرام"]||"غير محددة"}`:"غير محددة", icon:"aps-icon-hdd" },
+            { key:"نظام التشغيل", val:data.specs["نظام التشغيل"]||"غير محدد", icon:"aps-icon-code" },
+            { key:"البطارية", val:data.specs["البطارية"]||"غير محددة", icon:"aps-icon-battery" }
+          ].map(item=>`
+            <div class="col-md-12">
+              <div class="aps-feature-card">
+                <div class="aps-list-icon ${item.icon}"></div>
+                <div class="aps-feature-info text-center mt-2">
+                  <strong>${item.key}</strong><br>
+                  <span>${item.val}</span>
                 </div>
-              </div>`).join("")}
-          </div>
-        </div>`;
-      }
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <!-- 🟢 الصورة على اليمين -->
+      <div class="col-lg-6 text-center">
+        <div class="aps-main-image">
+          <img fetchpriority="high" class="aps-image-zoom rounded shadow-sm" src="${mainImage}" width="100%" style="max-width:400px;" alt="${data.title}">
+          <div class="aps-img-loader"><span class="aps-loader"></span></div>
+        </div>
+        <h4 class="fw-bold mt-2">${data.title}</h4>
+      </div>
+    </div>
+  </div>`;
+}
+
 
       if(tab==="السعر"){
         const priceVal = grouped["السعر"]?.[0]?.val || "غير متوفر";
@@ -309,3 +317,4 @@ resultDiv.addEventListener("click",(e)=>{
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
