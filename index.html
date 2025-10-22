@@ -174,19 +174,24 @@ async function getDetails(url, phoneImg) {
           { key:"المعالج", val:data.specs["المعالج"]||"غير محدد", icon:"aps-icon-cpu" },
  { key:"الكاميرات", 
   val:(() => {
-    const backRaw = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "غير محددة";
-    const frontRaw = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "غير محددة";
+    const backRaw = data.specs["كاميرا خلفية"] || data.specs["الكاميرا الخلفية"] || "";
+    const frontRaw = data.specs["كاميرا امامية"] || data.specs["الكاميرا الأمامية"] || "";
 
-    // إزالة نقاط • الأصلية
-    const back = backRaw.replace(/•\s*/g, "").trim();
-    const front = frontRaw.replace(/•\s*/g, "").trim();
+    // دالة لاستخراج أرقام الميجابكسل فقط من النص
+    const extractMP = (text) => {
+      const matches = text.match(/\d+\s*ميجابكسل/gi); // تبحث عن "16 ميجابكسل"
+      return matches ? matches.map(m=>m.replace(/\s+/g,"")).join("+") : "غير محددة";
+    };
+
+    const back = extractMP(backRaw);
+    const front = extractMP(frontRaw);
 
     if(back !== "غير محددة" && front !== "غير محددة") {
-      return `خلفية • ${back} / أمامية • ${front}`;
+      return `خلفية ${back} / أمامية ${front}`;
     } else if(back !== "غير محددة") {
-      return `خلفية • ${back}`;
+      return `خلفية ${back}`;
     } else if(front !== "غير محددة") {
-      return `أمامية • ${front}`;
+      return `أمامية ${front}`;
     } else {
       return "غير محددة";
     }
