@@ -25,12 +25,41 @@ export default async function handler(req, res) {
       "";
 
     const specs = {};
+
+    // 🟢 جلب المواصفات من الجداول
     $("table tr").each((_, tr) => {
       const key = $(tr).find("td:first-child").text().trim();
       const val = $(tr).find("td:last-child").text().trim();
       if (key && val) specs[key] = val;
     });
 
+    // 🟢 جلب المواصفات من القوائم (ul/li)
+    $("li.list-group-item").each((_, li) => {
+      const key = $(li).find("strong").text().trim();
+      const val = $(li).find("span").text().trim();
+      if (key && val && !specs[key]) specs[key] = val;
+    });
+
+    // 🟢 دمج تفاصيل الشاشة (نوع + حجم + دقة + معدل التحديث إن وجد)
+    if (
+      specs["نوع الشاشة"] ||
+      specs["حجم الشاشة"] ||
+      specs["دقة الشاشة"] ||
+      specs["معدل التحديث"]
+    ) {
+      const type = specs["نوع الشاشة"] ? specs["نوع الشاشة"].trim() : "";
+      const size = specs["حجم الشاشة"] ? specs["حجم الشاشة"].trim() : "";
+      const resolution = specs["دقة الشاشة"] ? specs["دقة الشاشة"].trim() : "";
+      const refresh = specs["معدل التحديث"] ? specs["معدل التحديث"].trim() : "";
+
+      // 🧩 إنشاء نص منسق
+      let screenText = `${type}${type && size ? " بحجم " : ""}${size}${(type || size) && resolution ? " بدقة " : ""}${resolution}`;
+      if (refresh) screenText += ` بمعدل ${refresh}`;
+
+      specs["الشاشة"] = screenText.trim();
+    }
+
+    // 🔹 إعادة البيانات للواجهة
     res.status(200).json({
       title,
       img,
