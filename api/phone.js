@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     let page = 1;
     let hasNext = true;
 
-    // 🧠 دالة لتوحيد النصوص
+    // دالة لتوحيد النصوص
     const normalize = (t) =>
       t.toLowerCase().replace(/[^\w\u0600-\u06FF\-]/g, "").trim();
 
@@ -51,6 +51,7 @@ export default async function handler(req, res) {
           $(el).find("img").attr("src");
 
         if (!link || !title || uniqueTitles.has(title)) continue;
+
         uniqueTitles.add(title);
 
         let chipset = "غير محدد";
@@ -58,7 +59,7 @@ export default async function handler(req, res) {
         let matched = false;
 
         try {
-          // 📥 جلب صفحة الهاتف لمعرفة الطراز والمعالج
+          // 🧠 جلب صفحة الهاتف لمعرفة الطراز والمعالج
           const phonePage = await fetch(link, {
             headers: {
               "User-Agent": "Mozilla/5.0",
@@ -87,27 +88,30 @@ export default async function handler(req, res) {
             const match = fullChipset.match(/[A-Za-z\u0600-\u06FF]+\s*[A-Za-z0-9\-]+/);
             chipset = match ? match[0].trim() : fullChipset;
 
-            // 🔍 تطابق مرن (يقبل أجزاء من الاسم أو الطراز)
+            // 🔍 تحقق من التطابق مع الاسم أو الطراز
             const normalizedTitle = normalize(title);
             const normalizedModel = normalize(model);
             matched =
               normalizedTitle.includes(normalizedQuery) ||
-              normalizedModel.includes(normalizedQuery) ||
-              normalizedQuery.includes(normalizedModel.slice(0, 4));
-          }
+              normalizedModel.includes(normalizedQuery);
+          }// 🔍 تحقق من التطابق مع الاسم أو الطراز
+const normalizedTitle = normalize(title);
+const normalizedModel = normalize(model);
+
+// ✨ تقسيم كلمات البحث والتحقق من وجودها في العنوان أو الموديل
+const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
+matched = queryWords.every(
+  (word) =>
+    normalizedTitle.includes(word) ||
+    normalizedModel.includes(word)
+);
+
         } catch (err) {
           console.error("⚠️ خطأ أثناء قراءة صفحة الهاتف:", err.message);
         }
 
         if (matched) {
-          results.push({
-            title,
-            link,
-            img,
-            model,
-            chipset,
-            source: "telfonak.com",
-          });
+          results.push({ title, link, img, model, chipset, source: "telfonak.com" });
         }
       }
 
@@ -116,7 +120,6 @@ export default async function handler(req, res) {
     }
 
     if (results.length > 0) {
-      // 🔢 ترتيب النتائج حسب درجة التطابق
       results.sort((a, b) => {
         const aMatch = normalize(a.title).includes(normalizedQuery);
         const bMatch = normalize(b.title).includes(normalizedQuery);
@@ -134,3 +137,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "حدث خطأ أثناء جلب البيانات." });
   }
 }
+
