@@ -1,43 +1,46 @@
-// search.js
+import * as cheerio from "cheerio";
 
-// 🧠 دوال مساعدة
-function normalizeText(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s]/gi, "") // إزالة الرموز
-    .replace(/\s+/g, " ") // توحيد المسافات
-    .trim();
-}
+export default async function handler(req, res) {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: "❌ يرجى إدخال كلمة البحث." });
 
-function filterResults(results, query) {
-  const seen = new Set();
-  const normalizedQuery = normalizeText(query);
+  try {
+    // 🔍 تحويل النص للبحث بدون رموز أو اختلافات
+    const normalize = (text) =>
+      text.toLowerCase().replace(/[^\w\s]/gi, "").trim();
 
-  return results.filter(item => {
-    const name = normalizeText(item.title || "");
-    if (seen.has(name)) return false;
-    seen.add(name);
+    const query = normalize(q);
 
-    return (
-      name.includes(normalizedQuery) ||
-      normalizedQuery.includes(name) ||
-      normalizedQuery.split(" ").some(q => name.includes(q))
-    );
-  });
-}
+    // 🧠 اجلب قائمة الهواتف من موقعك أو من قاعدة البيانات
+    const response = await fetch("https://telfonak.com/");
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-// 🔍 دالة البحث الرئيسية
-export async function searchPhones(query) {
-  if (!query) return [];
+    const results = [];
 
-  const response = await fetch(`/api/details?query=${encodeURIComponent(query)}`);
-  const data = await response.json();
+    $(".phone-item, .entry-title a").each((_, el) => {
+      const title = $(el).text().trim();
+      const link = $(el).attr("href");
+      const img = $(el).find("img").attr("src") || "";
 
-  // تأكد أن البيانات تحتوي على results أو مصفوفة
-  const phones = data.results || data || [];
+      if (title && link && normalize(title).includes(query)) {
+        results.push({ title, link, img });
+      }
+    });
 
-  // ✨ تصفية النتائج وإزالة المكررات
-  const filtered = filterResults(phones, query);
+    // ✨ إزالة المكررات بالاسم
+    const unique = [];
+    const seen = new Set();
+    for (const item of results) {
+      if (!seen.has(item.title)) {
+        unique.push(item);
+        seen.add(item.title);
+      }
+    }
 
-  return filtered;
+    res.status(200).json({ count: unique.length, results: unique });
+  } catch (err) {
+    console.error("⚠️ خطأ أثناء البحث:", err);
+    res.status(500).json({ error: "حدث خطأ أثناء تنفيذ عملية البحث." });
+  }
 }
