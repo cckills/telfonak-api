@@ -6,7 +6,6 @@
   ],
   "routes": [
     { "src": "/api/details", "dest": "/api/details.js" },
-    { "src": "/api/search", "dest": "/api/search.js" },
     { "src": "/api/(.*)", "dest": "/api/phone.js?phone=$1" },
     { "src": "/", "dest": "/index.html" }
   ]
