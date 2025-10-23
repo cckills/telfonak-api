@@ -7,17 +7,15 @@ export default async function handler(req, res) {
 
   try {
     const results = [];
+    const uniqueTitles = new Set(); // 🟢 لتجنب تكرار الأجهزة
     let page = 1;
     let hasNext = true;
 
-    // 🔁 البحث في صفحات الموقع (حتى 5 صفحات فقط)
     while (hasNext && page <= 5) {
       const searchUrl =
         page === 1
           ? `https://telfonak.com/?s=${encodeURIComponent(phone)}`
           : `https://telfonak.com/page/${page}/?s=${encodeURIComponent(phone)}`;
-
-      console.log("⏳ Fetching:", searchUrl);
 
       const response = await fetch(searchUrl, {
         headers: {
@@ -27,6 +25,7 @@ export default async function handler(req, res) {
       });
 
       if (!response.ok) break;
+
       const html = await response.text();
       const $ = cheerio.load(html);
       const items = $(".media, .post, article");
@@ -43,9 +42,17 @@ export default async function handler(req, res) {
           $(el).find("span.img").attr("data-bgsrc") ||
           $(el).find("img").attr("src");
 
-        if (link && title) {
+        if (link && title && !uniqueTitles.has(title)) {
+          uniqueTitles.add(title);
+
+          // 🧠 تصفية النتائج لتكون أكثر دقة (تشابه جزئي مع اسم البحث)
+          const normalizedTitle = title.toLowerCase().replace(/\s+/g, "");
+          const normalizedQuery = phone.toLowerCase().replace(/\s+/g, "");
+          if (!normalizedTitle.includes(normalizedQuery)) continue;
+
+          // 🧩 محاولة جلب المعالج من صفحة الهاتف
+          let chipset = "غير محدد";
           try {
-            // 🧠 جلب صفحة الهاتف لمعرفة نوع المعالج
             const phonePage = await fetch(link, {
               headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -57,43 +64,18 @@ export default async function handler(req, res) {
               const phoneHtml = await phonePage.text();
               const $$ = cheerio.load(phoneHtml);
 
-              // استخراج المعالج من جدول المواصفات
               let fullChipset =
                 $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
                 $$("tr:contains('المعالج') td.aps-attr-value").text().trim() ||
                 "";
 
-              // تنظيف النص من الزوائد
               fullChipset = fullChipset.replace(/\s+/g, " ").trim();
-
-              let shortChipset = fullChipset;
-
-              if (fullChipset) {
-                // إزالة الكلمات الزائدة مثل "ثماني النواة" إلخ
-                fullChipset = fullChipset
-                  .replace(/ثماني النواة|سداسي النواة|رباعي النواة|ثنائي النواة/gi, "")
-                  .replace(/[\(\)\-\–\,]/g, " ")
-                  .replace(/\b\d+(\.\d+)?\s*GHz\b/gi, "")
-                  .replace(/\b\d+\s*nm\b/gi, "")
-                  .replace(/\s+/g, " ")
-                  .trim();
-
-                // استخراج الاسم الأساسي فقط مثل Kirin 710F أو MediaTek MT6737
-                const match = fullChipset.match(/[A-Za-z\u0600-\u06FF]+\s*[A-Za-z0-9\-]+/);
-                shortChipset = match ? match[0].trim() : fullChipset;
-              }
-
-              results.push({
-                title,
-                link,
-                img,
-                chipset: shortChipset || "غير محدد",
-                source: "telfonak.com",
-              });
+              const match = fullChipset.match(/[A-Za-z\u0600-\u06FF]+\s*[A-Za-z0-9\-]+/);
+              chipset = match ? match[0].trim() : fullChipset;
             }
-          } catch (err) {
-            console.error("⚠️ خطأ أثناء جلب صفحة الهاتف:", err.message);
-          }
+          } catch {}
+
+          results.push({ title, link, img, chipset, source: "telfonak.com" });
         }
       }
 
@@ -101,16 +83,20 @@ export default async function handler(req, res) {
       page++;
     }
 
-    // ✅ إذا وجدنا نتائج، نرسلها فوراً
     if (results.length > 0) {
-      res.status(200).json({ mode: "list", results });
-      return;
-    }
+      // ✅ ترتيب النتائج حسب تطابق الاسم مع البحث
+      results.sort((a, b) => {
+        const aMatch = a.title.toLowerCase().includes(phone.toLowerCase());
+        const bMatch = b.title.toLowerCase().includes(phone.toLowerCase());
+        return aMatch === bMatch ? 0 : aMatch ? -1 : 1;
+      });
 
-    // 🚫 لا نحاول بناء رابط مباشر مثل https://telfonak.com/y9/
-    res.status(404).json({
-      error: "❌ لم يتم العثور على أي نتائج لهذا الاسم في الموقع.",
-    });
+      res.status(200).json({ mode: "list", results });
+    } else {
+      res.status(404).json({
+        error: "❌ لم يتم العثور على أي نتائج لهذا الاسم في الموقع.",
+      });
+    }
   } catch (err) {
     console.error("⚠️ خطأ أثناء الجلب:", err);
     res.status(500).json({ error: "حدث خطأ أثناء جلب البيانات." });
