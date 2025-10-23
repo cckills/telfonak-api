@@ -7,59 +7,58 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "User-Agent": "Mozilla/5.0",
         "Accept-Language": "ar,en;q=0.9",
       },
     });
 
-    if (!response.ok)
-      return res.status(404).json({ error: "❌ الرابط غير صالح أو لا يعمل." });
+    if (!response.ok) {
+      return res.status(404).json({ error: "لم يتم العثور على الصفحة المطلوبة." });
+    }
 
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    const title = $("h1.entry-title").text().trim() || "غير محدد";
+    // عنوان الهاتف
+    const title = $("h1, h2").first().text().trim() || "غير محدد";
+
+    // صورة الهاتف
     const img =
-      $(".entry-content img").first().attr("src") ||
-      $(".post-thumbnail img").attr("src") ||
-      "";
+      $("span.img").attr("data-bgsrc") ||
+      $("img").first().attr("src") ||
+      "https://telfonak.com/wp-content/uploads/2023/12/huawei-y9-prime-2019.webp";
 
+    // تجميع المواصفات من الجداول والقوائم
     const specs = {};
-
-    // 🟢 جلب المواصفات من الجداول
-    $("table tr").each((_, tr) => {
-      const key = $(tr).find("td:first-child").text().trim();
-      const val = $(tr).find("td:last-child").text().trim();
+    $("tr").each((i, el) => {
+      const key = $(el).find("th, td:first-child").text().trim();
+      const val = $(el).find("td:last-child").text().trim();
       if (key && val) specs[key] = val;
     });
 
-    // 🟢 جلب المواصفات من القوائم (ul/li)
-    $("li.list-group-item").each((_, li) => {
-      const key = $(li).find("strong").text().trim();
-      const val = $(li).find("span").text().trim();
-      if (key && val && !specs[key]) specs[key] = val;
+    $("li").each((i, el) => {
+      const text = $(el).text().trim();
+      const [key, val] = text.split(/[:\-]/).map(s => s.trim());
+      if (key && val) specs[key] = val;
     });
 
-    // 🟢 دمج تفاصيل الشاشة (نوع + حجم + دقة + معدل التحديث إن وجد)
-    if (
-      specs["نوع الشاشة"] ||
-      specs["حجم الشاشة"] ||
-      specs["دقة الشاشة"] ||
-      specs["معدل التحديث"]
-    ) {
-      const type = specs["نوع الشاشة"] ? specs["نوع الشاشة"].trim() : "";
-      const size = specs["حجم الشاشة"] ? specs["حجم الشاشة"].trim() : "";
-      const resolution = specs["دقة الشاشة"] ? specs["دقة الشاشة"].trim() : "";
-      const refresh = specs["معدل التحديث"] ? specs["معدل التحديث"].trim() : "";
-
-      // 🧩 إنشاء نص منسق
-      let screenText = `${type}${type && size ? " بحجم " : ""}${size}${(type || size) && resolution ? " بدقة " : ""}${resolution}`;
-      if (refresh) screenText += ` بمعدل ${refresh}`;
-
-      specs["الشاشة"] = screenText.trim();
+    // ضمان وجود بعض الخصائص الأساسية
+    if (!specs["المعالج"]) {
+      const processor =
+        $("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
+        $("tr:contains('المعالج') td.aps-attr-value").text().trim() ||
+        "غير محدد";
+      specs["المعالج"] = processor;
     }
 
-    // 🔹 إعادة البيانات للواجهة
+    if (!specs["الموديل"] && !specs["الطراز"]) {
+      const model =
+        $("li:contains('الموديل') span").text().trim() ||
+        $("li:contains('الطراز') span").text().trim() ||
+        "غير محدد";
+      specs["الموديل"] = model;
+    }
+
     res.status(200).json({
       title,
       img,
@@ -67,7 +66,7 @@ export default async function handler(req, res) {
       source: url,
     });
   } catch (err) {
-    console.error("⚠️ خطأ أثناء جلب التفاصيل:", err);
-    res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات الهاتف." });
+    console.error("⚠️ خطأ أثناء جلب تفاصيل الهاتف:", err);
+    res.status(500).json({ error: "حدث خطأ أثناء جلب التفاصيل." });
   }
 }
