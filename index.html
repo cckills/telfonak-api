@@ -342,7 +342,7 @@ form.addEventListener("submit", async(e)=>{
   resultDiv.innerHTML = `<div class='alert alert-info'>🔍 جاري البحث عن "${phone}"...</div>`;
 
   try{
-const res = await fetch(`/api/search?q=${encodeURIComponent(phone)}`);
+const res = await fetch(`/api/phone?phone=${encodeURIComponent(phone)}`);
     const data = await res.json();
     if(data.error){ resultDiv.innerHTML = `<div class='alert alert-danger'>❌ ${data.error}</div>`; return; }
 
@@ -429,6 +429,7 @@ resultDiv.addEventListener("click",(e)=>{
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 
 
