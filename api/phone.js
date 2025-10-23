@@ -42,78 +42,76 @@ export default async function handler(req, res) {
       }
 
       for (const el of items.toArray()) {
-        const link = $(el).find("a.image-link").attr("href");
-        const title =
-          $(el).find("a.image-link").attr("title") ||
-          $(el).find("h2 a").text().trim();
-        const img =
-          $(el).find("span.img").attr("data-bgsrc") ||
-          $(el).find("img").attr("src");
+  const link = $(el).find("a.image-link").attr("href");
+  const title =
+    $(el).find("a.image-link").attr("title") ||
+    $(el).find("h2 a").text().trim();
+  const img =
+    $(el).find("span.img").attr("data-bgsrc") ||
+    $(el).find("img").attr("src");
 
-        if (!link || !title || uniqueTitles.has(title)) continue;
+  if (!link || !title || uniqueTitles.has(title)) continue;
+  uniqueTitles.add(title);
 
-        uniqueTitles.add(title);
+  // 🧠 فلترة مبدئية قبل جلب الصفحة
+  const normalizedTitle = normalize(title);
+  const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
 
-        let chipset = "غير محدد";
-        let model = "غير محدد";
-        let matched = false;
+  const quickMatch = queryWords.every((word) =>
+    normalizedTitle.includes(word)
+  );
 
-        try {
-          // 🧠 جلب صفحة الهاتف لمعرفة الطراز والمعالج
-          const phonePage = await fetch(link, {
-            headers: {
-              "User-Agent": "Mozilla/5.0",
-              "Accept-Language": "ar,en;q=0.9",
-            },
-          });
+  // ⏭️ تجاهل النتائج البعيدة جداً
+  if (!quickMatch) continue;
 
-          if (phonePage.ok) {
-            const phoneHtml = await phonePage.text();
-            const $$ = cheerio.load(phoneHtml);
+  let chipset = "غير محدد";
+  let model = "غير محدد";
+  let matched = false;
 
-            // 🔹 استخراج الموديل/الطراز
-            model =
-              $$("li:contains('الموديل') span").text().trim() ||
-              $$("li:contains('الطراز') span").text().trim() ||
-              $$("tr:contains('الموديل') td:last-child").text().trim() ||
-              $$("tr:contains('الطراز') td:last-child").text().trim() ||
-              "غير محدد";
+  try {
+    const phonePage = await fetch(link, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Language": "ar,en;q=0.9",
+      },
+    });
 
-            // 🔹 استخراج المعالج
-            let fullChipset =
-              $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
-              $$("tr:contains('المعالج') td.aps-attr-value").text().trim() ||
-              "";
-            fullChipset = fullChipset.replace(/\s+/g, " ").trim();
-            const match = fullChipset.match(/[A-Za-z\u0600-\u06FF]+\s*[A-Za-z0-9\-]+/);
-            chipset = match ? match[0].trim() : fullChipset;
+    if (phonePage.ok) {
+      const phoneHtml = await phonePage.text();
+      const $$ = cheerio.load(phoneHtml);
 
-            // 🔍 تحقق من التطابق مع الاسم أو الطراز
-            const normalizedTitle = normalize(title);
-            const normalizedModel = normalize(model);
-            matched =
-              normalizedTitle.includes(normalizedQuery) ||
-              normalizedModel.includes(normalizedQuery);
-          }// 🔍 تحقق من التطابق مع الاسم أو الطراز
-const normalizedTitle = normalize(title);
-const normalizedModel = normalize(model);
+      model =
+        $$("li:contains('الموديل') span").text().trim() ||
+        $$("li:contains('الطراز') span").text().trim() ||
+        $$("tr:contains('الموديل') td:last-child").text().trim() ||
+        $$("tr:contains('الطراز') td:last-child").text().trim() ||
+        "غير محدد";
 
-// ✨ تقسيم كلمات البحث والتحقق من وجودها في العنوان أو الموديل
-const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
-matched = queryWords.every(
-  (word) =>
-    normalizedTitle.includes(word) ||
-    normalizedModel.includes(word)
-);
+      let fullChipset =
+        $$("tr:contains('المعالج') td.aps-attr-value span").text().trim() ||
+        $$("tr:contains('المعالج') td.aps-attr-value").text().trim() ||
+        "";
+      fullChipset = fullChipset.replace(/\s+/g, " ").trim();
+      const match = fullChipset.match(/[A-Za-z\u0600-\u06FF]+\s*[A-Za-z0-9\-]+/);
+      chipset = match ? match[0].trim() : fullChipset;
 
-        } catch (err) {
-          console.error("⚠️ خطأ أثناء قراءة صفحة الهاتف:", err.message);
-        }
+      const normalizedModel = normalize(model);
 
-        if (matched) {
-          results.push({ title, link, img, model, chipset, source: "telfonak.com" });
-        }
-      }
+      matched =
+        queryWords.every(
+          (word) =>
+            normalizedTitle.includes(word) ||
+            normalizedModel.includes(word)
+        );
+    }
+  } catch (err) {
+    console.error("⚠️ خطأ أثناء قراءة صفحة الهاتف:", err.message);
+  }
+
+  if (matched) {
+    results.push({ title, link, img, model, chipset, source: "telfonak.com" });
+  }
+}
 
       hasNext = $(".pagination .next, .nav-links .next").length > 0;
       page++;
